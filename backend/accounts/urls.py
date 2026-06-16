@@ -4,7 +4,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import ProfileView
+from .views import (
+    ProfileView,
+    AdminDashboardView,
+    ManagementView,
+)
 
 urlpatterns = [
     path(
@@ -23,5 +27,17 @@ urlpatterns = [
         "profile/",
         ProfileView.as_view(),
         name="profile",
+    ),
+
+    path(
+        "admin-dashboard/",
+        AdminDashboardView.as_view(),
+        name="admin_dashboard",
+    ),
+
+    path(
+        "management/",
+        ManagementView.as_view(),
+        name="management",
     ),
 ]
