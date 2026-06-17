@@ -1,22 +1,15 @@
 from django.urls import path
 
 from .views import (
-    CustomerCreateView,
-    CustomerListView,
+    CustomerListCreateView,
     CustomerDetailView,
 )
 
 urlpatterns = [
     path(
         "",
-        CustomerListView.as_view(),
-        name="customer-list",
-    ),
-
-    path(
-        "create/",
-        CustomerCreateView.as_view(),
-        name="customer-create",
+        CustomerListCreateView.as_view(),
+        name="customer-list-create",
     ),
 
     path(

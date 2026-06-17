@@ -13,4 +13,9 @@ urlpatterns = [
         "api/customers/",
         include("customers.urls"),
     ),
+
+    path(
+        "api/leads/",
+        include("leads.urls"),
+    ),
 ]
