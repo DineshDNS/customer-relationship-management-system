@@ -15,6 +15,13 @@ from .permissions import IsLeadOwnerOrAdminOrManager
 from .status_serializer import LeadStatusSerializer
 from .services import validate_status_transition
 
+from activities.services import (
+    create_activity_log
+)
+
+from notifications.services import (
+    create_notification
+)
 
 # ==============================
 # Lead List & Create
@@ -52,10 +59,17 @@ class LeadListCreateView(
 
     def perform_create(
         self,
-        serializer
-    ):
-        serializer.save(
+        serializer):
+
+        lead = serializer.save(
             created_by=self.request.user
+        )
+
+        create_activity_log(
+            user=self.request.user,
+            action_type="LEAD_CREATED",
+            description=
+            f"Lead created for {lead.customer.name}"
         )
 
 
@@ -153,6 +167,17 @@ class LeadStatusUpdateView(
 
         lead.save()
 
+        create_activity_log(
+
+        user=request.user,
+
+        action_type=
+        "LEAD_STATUS_CHANGED",
+
+        description=
+        f"Lead #{lead.id} moved to {new_status}"
+    )
+
         return Response(
             {
                 "message":
@@ -210,6 +235,28 @@ class LeadAssignView(
         lead.assigned_to = user
 
         lead.save()
+
+        create_activity_log(
+
+            user=request.user,
+
+            action_type=
+            "LEAD_ASSIGNED",
+
+            description=
+            f"Lead assigned to {user.username}"
+        )
+
+        create_notification(
+
+            user=user,
+
+            title=
+            "New Lead Assigned",
+
+            message=
+            f"Lead #{lead.id} assigned to you."
+        )
 
         return Response(
             {

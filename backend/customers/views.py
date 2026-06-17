@@ -7,6 +7,10 @@ from .serializers import CustomerSerializer
 from .permissions import IsOwnerOrAdminOrManager
 from rest_framework import filters
 
+from activities.services import (
+    create_activity_log
+)
+
 class CustomerListCreateView(generics.ListCreateAPIView):
 
     queryset = Customer.objects.all().order_by("-created_at")
@@ -24,9 +28,20 @@ class CustomerListCreateView(generics.ListCreateAPIView):
         "company",
     ]
 
-    def perform_create(self, serializer):
-        serializer.save(
+    def perform_create(
+        self,
+        serializer
+    ):
+
+        customer = serializer.save(
             created_by=self.request.user
+        )
+
+        create_activity_log(
+            user=self.request.user,
+            action_type="CUSTOMER_CREATED",
+            description=
+            f"Customer '{customer.name}' created"
         )
 
 
@@ -49,3 +64,4 @@ class CustomerDetailView(generics.RetrieveUpdateDestroyAPIView):
             )
 
         instance.delete()
+

@@ -46,6 +46,11 @@ INSTALLED_APPS = [
     'customers',
     'leads',
     'deals',
+    'dashboard',
+    'tasks',
+    "notifications",
+    "activities",
+    'reports',
 ]
 
 # --------------------------------------------------
