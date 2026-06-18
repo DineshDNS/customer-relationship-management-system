@@ -9,6 +9,12 @@ from .views import (
     UserActivityReportView,
 )
 
+from .views import (
+    DashboardReportView,
+    SalesPerformanceReportView,
+    LeadConversionReportView,
+    UserActivityReportView,
+)
 urlpatterns = [
 
     path(
@@ -27,6 +33,12 @@ urlpatterns = [
         "activities/",
         UserActivityReportView.as_view(),
         name="activity-report",
+    ),
+
+    path(
+        "dashboard/",
+        DashboardReportView.as_view(),
+        name="dashboard-report",
     ),
 
 ]

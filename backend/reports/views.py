@@ -159,3 +159,66 @@ class UserActivityReportView(
             })
 
         return Response(data)
+    
+from customers.models import Customer
+from tasks.models import Task
+
+# ==============================
+# Dashboard Summary Report
+# ==============================
+
+class DashboardReportView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get(
+        self,
+        request
+    ):
+
+        total_customers = (
+            Customer.objects.count()
+        )
+
+        total_leads = (
+            Lead.objects.count()
+        )
+
+        total_deals = (
+            Deal.objects.count()
+        )
+
+        total_tasks = (
+            Task.objects.count()
+        )
+
+        won_revenue = (
+            Deal.objects.filter(
+                stage="WON"
+            ).aggregate(
+                Sum("deal_value")
+            )["deal_value__sum"]
+            or 0
+        )
+
+        return Response({
+
+            "customers":
+                total_customers,
+
+            "leads":
+                total_leads,
+
+            "deals":
+                total_deals,
+
+            "tasks":
+                total_tasks,
+
+            "revenue":
+                won_revenue,
+        })

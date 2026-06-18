@@ -12,35 +12,49 @@ function MainLayout({ children }) {
     "
     >
 
+      {/* Sidebar */}
+
       <Sidebar />
+
+      {/* Main Content */}
 
       <div
         className="
         ml-64
-
         min-h-screen
-
-        flex
-        flex-col
       "
       >
 
-        <Topbar />
+        {/* Fixed Topbar */}
+
+        <div
+          className="
+          fixed
+          top-0
+          left-64
+          right-0
+          z-40
+
+          bg-white
+        "
+        >
+
+          <Topbar />
+
+        </div>
+
+        {/* Page Content */}
 
         <main
           className="
-          flex-1
-
+          pt-24
           p-8
-
-          overflow-y-auto
         "
         >
 
           <div
             className="
             max-w-7xl
-
             mx-auto
           "
           >

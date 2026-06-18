@@ -71,3 +71,15 @@ class UserListView(
     permission_classes = [
         IsAuthenticated
     ]
+
+class UserDetailView(
+    generics.RetrieveAPIView
+):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]

@@ -43,7 +43,28 @@ import MyTasks from "../pages/tasks/MyTasks";
 import TodayTasks from "../pages/tasks/TodayTasks";
 import OverdueTasks from "../pages/tasks/OverdueTasks";
 import ActivityList
+
 from "../pages/activities/ActivityList";
+import ReportsDashboard
+
+from "../pages/reports/ReportsDashboard";
+import SalesReport
+from "../pages/reports/SalesReport";
+import LeadReport
+from "../pages/reports/LeadReport";
+import ActivityReport
+from "../pages/reports/ActivityReport";
+import ReportsAnalytics
+from "../pages/reports/ReportsAnalytics";
+
+import UserList
+from "../pages/users/UserList";
+
+import UserDetail
+from "../pages/users/UserDetail";
+
+import NotificationList
+from "../pages/notifications/NotificationList";
 
 function AppRoutes() {
 
@@ -220,6 +241,48 @@ function AppRoutes() {
           path="/activities"
           element={<ActivityList />}
         />
+
+        <Route
+          path="/reports"
+          element={<ReportsDashboard />}
+        />
+
+        <Route
+          path="/reports/sales"
+          element={<SalesReport />}
+        />
+
+        <Route
+          path="/reports/leads"
+          element={<LeadReport />}
+      />
+
+      <Route
+        path="/reports/activities"
+        element={<ActivityReport />}
+      />
+
+      <Route
+        path="/reports/analytics"
+        element={<ReportsAnalytics />}
+      />
+
+      <Route
+        path="/users"
+        element={<UserList />}
+      />
+
+      <Route
+        path="/users/:id"
+        element={<UserDetail />}
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <NotificationList />
+        }
+      />
 
       </Routes>
 

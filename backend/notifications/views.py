@@ -11,6 +11,7 @@ from .models import Notification
 from .serializers import (
     NotificationSerializer
 )
+from django.shortcuts import get_object_or_404
 
 
 # ==============================
@@ -58,11 +59,10 @@ class NotificationReadView(
         pk
     ):
 
-        notification = (
-            Notification.objects.get(
-                pk=pk,
-                user=request.user
-            )
+        notification = get_object_or_404(
+            Notification,
+            pk=pk,
+            user=request.user
         )
 
         notification.is_read = True
@@ -75,3 +75,4 @@ class NotificationReadView(
                 "Notification marked as read"
             }
         )
+    

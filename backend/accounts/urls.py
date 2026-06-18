@@ -11,6 +11,7 @@ from .views import (
     AdminDashboardView,
     ManagementView,
     UserListView,
+    UserDetailView,
 )
 
 urlpatterns = [
@@ -55,5 +56,11 @@ urlpatterns = [
         "users/",
         UserListView.as_view(),
         name="users",
+    ),
+
+    path(
+        "users/<int:pk>/",
+        UserDetailView.as_view(),
+        name="user-detail",
     ),
 ]
