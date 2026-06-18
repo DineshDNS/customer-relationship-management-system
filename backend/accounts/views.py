@@ -8,6 +8,28 @@ from .permissions import (
     IsAdminOrManager,
 )
 
+from rest_framework import generics
+
+from .models import User
+
+from .serializers import (
+    UserSerializer,
+    RegisterSerializer,
+)
+
+# ==============================
+# Register
+# ==============================
+
+class RegisterView(
+    generics.CreateAPIView
+):
+
+    queryset = User.objects.all()
+
+    serializer_class = (
+        RegisterSerializer
+    )
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -33,3 +55,19 @@ class ManagementView(APIView):
         return Response({
             "message": "Manager/Admin Access Granted"
         })
+    
+# ==============================
+# Users List
+# ==============================
+
+class UserListView(
+    generics.ListAPIView
+):
+
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]
