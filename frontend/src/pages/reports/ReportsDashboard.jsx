@@ -17,11 +17,16 @@ import api from
 "../../api/api";
 
 import {
+
   FaUsers,
   FaBullseye,
   FaHandshake,
   FaTasks,
   FaRupeeSign,
+  FaChartLine,
+  FaPercentage,
+  FaFileAlt,
+
 } from "react-icons/fa";
 
 function ReportsDashboard() {
@@ -79,14 +84,29 @@ function ReportsDashboard() {
       "
       >
 
-        <h1
-          className="
-          text-3xl
-          font-bold
-        "
-        >
-          Reports Dashboard
-        </h1>
+        <div>
+
+          <h1
+            className="
+            text-4xl
+            font-bold
+            text-gray-800
+          "
+          >
+            Reports Dashboard
+          </h1>
+
+          <p
+            className="
+            text-gray-500
+            mt-2
+          "
+          >
+            Overview of CRM performance,
+            business growth and sales metrics.
+          </p>
+
+        </div>
 
       </div>
 
@@ -94,34 +114,41 @@ function ReportsDashboard() {
         items={REPORTS_NAV}
       />
 
+      {/* Statistics Cards */}
+
       <div
         className="
         grid
-        md:grid-cols-5
-        gap-5
+        grid-cols-1
+        md:grid-cols-2
+        lg:grid-cols-5
+        gap-6
       "
       >
 
         <div
           className="
           bg-white
-          rounded-2xl
+          rounded-3xl
           shadow-md
           p-6
+          border-l-4
+          border-red-600
         "
         >
 
           <FaUsers
             className="
             text-red-600
-            text-3xl
-            mb-3
+            text-4xl
+            mb-4
           "
           />
 
           <h3
             className="
             text-gray-500
+            mb-2
           "
           >
             Customers
@@ -129,7 +156,7 @@ function ReportsDashboard() {
 
           <p
             className="
-            text-3xl
+            text-4xl
             font-bold
           "
           >
@@ -141,23 +168,26 @@ function ReportsDashboard() {
         <div
           className="
           bg-white
-          rounded-2xl
+          rounded-3xl
           shadow-md
           p-6
+          border-l-4
+          border-blue-600
         "
         >
 
           <FaBullseye
             className="
             text-blue-600
-            text-3xl
-            mb-3
+            text-4xl
+            mb-4
           "
           />
 
           <h3
             className="
             text-gray-500
+            mb-2
           "
           >
             Leads
@@ -165,7 +195,7 @@ function ReportsDashboard() {
 
           <p
             className="
-            text-3xl
+            text-4xl
             font-bold
           "
           >
@@ -177,23 +207,26 @@ function ReportsDashboard() {
         <div
           className="
           bg-white
-          rounded-2xl
+          rounded-3xl
           shadow-md
           p-6
+          border-l-4
+          border-green-600
         "
         >
 
           <FaHandshake
             className="
             text-green-600
-            text-3xl
-            mb-3
+            text-4xl
+            mb-4
           "
           />
 
           <h3
             className="
             text-gray-500
+            mb-2
           "
           >
             Deals
@@ -201,7 +234,7 @@ function ReportsDashboard() {
 
           <p
             className="
-            text-3xl
+            text-4xl
             font-bold
           "
           >
@@ -213,23 +246,26 @@ function ReportsDashboard() {
         <div
           className="
           bg-white
-          rounded-2xl
+          rounded-3xl
           shadow-md
           p-6
+          border-l-4
+          border-orange-500
         "
         >
 
           <FaTasks
             className="
-            text-orange-600
-            text-3xl
-            mb-3
+            text-orange-500
+            text-4xl
+            mb-4
           "
           />
 
           <h3
             className="
             text-gray-500
+            mb-2
           "
           >
             Tasks
@@ -237,7 +273,7 @@ function ReportsDashboard() {
 
           <p
             className="
-            text-3xl
+            text-4xl
             font-bold
           "
           >
@@ -249,23 +285,26 @@ function ReportsDashboard() {
         <div
           className="
           bg-white
-          rounded-2xl
+          rounded-3xl
           shadow-md
           p-6
+          border-l-4
+          border-purple-600
         "
         >
 
           <FaRupeeSign
             className="
             text-purple-600
-            text-3xl
-            mb-3
+            text-4xl
+            mb-4
           "
           />
 
           <h3
             className="
             text-gray-500
+            mb-2
           "
           >
             Revenue
@@ -273,7 +312,7 @@ function ReportsDashboard() {
 
           <p
             className="
-            text-3xl
+            text-4xl
             font-bold
             text-green-600
           "
@@ -285,41 +324,134 @@ function ReportsDashboard() {
 
       </div>
 
+      {/* Summary Section */}
+
       <div
         className="
         mt-8
 
-        bg-white
-
-        rounded-2xl
-
-        shadow-md
-
-        p-8
+        grid
+        lg:grid-cols-3
+        gap-6
       "
       >
 
-        <h2
+        <div
           className="
-          text-2xl
-          font-bold
-          mb-3
+          bg-white
+          rounded-3xl
+          shadow-md
+          p-8
         "
         >
-          CRM Performance Summary
-        </h2>
 
-        <p
+          <FaChartLine
+            className="
+            text-red-600
+            text-5xl
+            mb-4
+          "
+          />
+
+          <h2
+            className="
+            text-xl
+            font-bold
+            mb-3
+          "
+          >
+            Sales Growth
+          </h2>
+
+          <p
+            className="
+            text-gray-600
+          "
+          >
+            Monitor sales performance,
+            won deals and revenue
+            generated by the CRM system.
+          </p>
+
+        </div>
+
+        <div
           className="
-          text-gray-600
+          bg-white
+          rounded-3xl
+          shadow-md
+          p-8
         "
         >
-          This dashboard provides
-          an overview of customers,
-          leads, deals, tasks and
-          total revenue generated
-          from won deals.
-        </p>
+
+          <FaPercentage
+            className="
+            text-blue-600
+            text-5xl
+            mb-4
+          "
+          />
+
+          <h2
+            className="
+            text-xl
+            font-bold
+            mb-3
+          "
+          >
+            Lead Conversion
+          </h2>
+
+          <p
+            className="
+            text-gray-600
+          "
+          >
+            Analyze lead conversion
+            rates and measure the
+            effectiveness of sales teams.
+          </p>
+
+        </div>
+
+        <div
+          className="
+          bg-white
+          rounded-3xl
+          shadow-md
+          p-8
+        "
+        >
+
+          <FaFileAlt
+            className="
+            text-green-600
+            text-5xl
+            mb-4
+          "
+          />
+
+          <h2
+            className="
+            text-xl
+            font-bold
+            mb-3
+          "
+          >
+            Business Reports
+          </h2>
+
+          <p
+            className="
+            text-gray-600
+          "
+          >
+            Generate detailed sales,
+            lead and activity reports
+            in PDF and Excel formats.
+          </p>
+
+        </div>
 
       </div>
 

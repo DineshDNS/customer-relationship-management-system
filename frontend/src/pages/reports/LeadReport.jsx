@@ -20,6 +20,8 @@ import {
   FaBullseye,
   FaCheckCircle,
   FaPercentage,
+  FaFilePdf,
+  FaFileExcel,
 } from "react-icons/fa";
 
 function LeadReport() {
@@ -39,6 +41,80 @@ function LeadReport() {
     fetchReport();
 
   }, []);
+
+  const downloadPDF = async () => {
+
+    try {
+
+      const response =
+        await api.get(
+          "reports/leads/pdf/",
+          {
+            responseType: "blob",
+          }
+        );
+
+      const url =
+        window.URL.createObjectURL(
+          new Blob([response.data])
+        );
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      link.download =
+        "lead_report.pdf";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  };
+
+  const downloadExcel = async () => {
+
+    try {
+
+      const response =
+        await api.get(
+          "reports/leads/excel/",
+          {
+            responseType: "blob",
+          }
+        );
+
+      const url =
+        window.URL.createObjectURL(
+          new Blob([response.data])
+        );
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      link.download =
+        "lead_report.xlsx";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  };
 
   const fetchReport =
     async () => {
@@ -81,6 +157,65 @@ function LeadReport() {
         >
           Lead Report
         </h1>
+
+        <div
+          className="
+          flex
+          gap-3
+        "
+        >
+
+          <button
+            onClick={downloadPDF}
+            className="
+            flex
+            items-center
+            gap-2
+
+            bg-red-600
+            hover:bg-red-700
+
+            text-white
+
+            px-5
+            py-3
+
+            rounded-xl
+          "
+          >
+
+            <FaFilePdf />
+
+            Export PDF
+
+          </button>
+
+          <button
+            onClick={downloadExcel}
+            className="
+            flex
+            items-center
+            gap-2
+
+            bg-green-600
+            hover:bg-green-700
+
+            text-white
+
+            px-5
+            py-3
+
+            rounded-xl
+          "
+          >
+
+            <FaFileExcel />
+
+            Export Excel
+
+          </button>
+
+        </div>
 
       </div>
 
