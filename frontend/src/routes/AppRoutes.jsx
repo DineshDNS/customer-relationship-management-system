@@ -71,6 +71,17 @@ import LeadUpdate from "../pages/leads/LeadUpdate";
 import DealUpdate from "../pages/deals/DealUpdate";
 import TaskUpdate from "../pages/tasks/TaskUpdate";
 
+import CommunicationList from "../pages/communications/CommunicationList";
+
+import CommunicationCreate from
+"../pages/communications/CommunicationCreate";
+
+import CommunicationDetail from
+"../pages/communications/CommunicationDetail";
+
+import CommunicationUpdate from
+"../pages/communications/CommunicationUpdate";
+
 function AppRoutes() {
 
   return (
@@ -307,6 +318,34 @@ function AppRoutes() {
       <Route
         path="/tasks/:id/edit"
         element={<TaskUpdate />}
+      />
+
+      <Route
+        path="/communications"
+        element={
+          <CommunicationList />
+        }
+      />
+
+      <Route
+        path="/communications/create"
+        element={
+          <CommunicationCreate />
+        }
+      />
+
+      <Route
+        path="/communications/:id"
+        element={
+          <CommunicationDetail />
+        }
+      />
+
+      <Route
+        path="/communications/:id/edit"
+        element={
+          <CommunicationUpdate />
+        }
       />
 
       </Routes>

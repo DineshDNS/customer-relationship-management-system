@@ -8,6 +8,7 @@ import {
   FaChartBar,
   FaUserCog,
   FaCog,
+  FaComments,
 } from "react-icons/fa";
 
 export const MENU_ITEMS = [
@@ -52,6 +53,12 @@ export const MENU_ITEMS = [
     name: "Reports",
     path: "/reports",
     icon: FaChartBar,
+  },
+
+  {
+    name: "Communications",
+    path: "/communications",
+    icon: FaComments,
   },
 
   {

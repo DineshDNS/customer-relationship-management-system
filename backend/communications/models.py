@@ -6,11 +6,14 @@ from customers.models import Customer
 
 class Communication(models.Model):
 
-    TYPE_CHOICES = [
+    COMMUNICATION_TYPES = [
 
         ("CALL", "Call"),
+
         ("EMAIL", "Email"),
+
         ("MEETING", "Meeting"),
+
         ("NOTE", "Note"),
     ]
 
@@ -22,7 +25,7 @@ class Communication(models.Model):
 
     communication_type = models.CharField(
         max_length=20,
-        choices=TYPE_CHOICES
+        choices=COMMUNICATION_TYPES
     )
 
     subject = models.CharField(
@@ -40,6 +43,21 @@ class Communication(models.Model):
         auto_now_add=True
     )
 
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+
+        ordering = [
+            "-created_at"
+        ]
+
     def __str__(self):
 
-        return self.subject
+        return (
+
+            f"{self.customer.name}"
+            f" - "
+            f"{self.communication_type}"
+        )

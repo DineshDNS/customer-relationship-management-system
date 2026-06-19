@@ -54,7 +54,7 @@ urlpatterns = [
     ),
 
     path(
-        "communications/",
+        "api/communications/",
         include(
             "communications.urls"
         ),
