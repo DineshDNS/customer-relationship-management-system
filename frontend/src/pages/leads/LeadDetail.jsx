@@ -5,11 +5,13 @@ import {
 
 import {
   useParams,
+  useNavigate,
 } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
-import BackButton from "../../components/common/BackButton";
 import api from "../../api/api";
+
+import PageActions from "../../components/common/PageActions";
 
 function LeadDetail() {
 
@@ -22,11 +24,45 @@ function LeadDetail() {
   const [status, setStatus] =
     useState("");
 
+  const navigate =
+    useNavigate();
+
   useEffect(() => {
 
     fetchLead();
 
   }, []);
+
+  const handleDelete =
+    async () => {
+
+      if (
+        !window.confirm(
+          "Delete this lead?"
+        )
+      ) return;
+
+      try {
+
+        await api.delete(
+          `leads/${id}/`
+        );
+
+        alert(
+          "Lead deleted successfully"
+        );
+
+        navigate(
+          "/leads"
+        );
+
+      } catch (error) {
+
+        console.log(
+          error.response?.data
+        );
+      }
+    };
 
   const fetchLead =
     async () => {
@@ -103,9 +139,11 @@ function LeadDetail() {
 
     <MainLayout>
 
-      <BackButton
-        path="/leads"
-        title="Leads"
+      <PageActions
+        backPath="/leads"
+        backTitle="Leads"
+        editPath={`/leads/${id}/edit`}
+        onDelete={handleDelete}
       />
 
       <div

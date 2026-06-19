@@ -32,6 +32,10 @@ from activities.services import (
     create_activity_log
 )
 
+from notifications.services import (
+    create_notification
+)
+
 
 # ==============================
 # Task List & Create
@@ -79,6 +83,16 @@ class TaskListCreateView(
 
             description=
             f"Task '{task.title}' created"
+        )
+
+        create_notification(
+
+            user=task.assigned_to,
+
+            title="New Task Assigned",
+
+            message=
+            f"Task '{task.title}' assigned to you."
         )
 
 
@@ -179,6 +193,16 @@ class TaskStatusUpdateView(
 
                 description=
                 f"Task '{task.title}' completed"
+            )
+
+            create_notification(
+
+                user=request.user,
+
+                title="Task Completed",
+
+                message=
+                f"Task '{task.title}' completed."
             )
 
         return Response(

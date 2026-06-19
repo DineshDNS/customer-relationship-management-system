@@ -1,5 +1,12 @@
-from django.db.models import Sum
-from django.db.models import Avg
+from django.db.models import (
+    Sum,
+    Avg,
+    Count,
+)
+
+from django.db.models.functions import (
+    TruncMonth
+)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,14 +17,12 @@ from rest_framework.permissions import (
 from customers.models import Customer
 from leads.models import Lead
 from deals.models import Deal
-
-from django.db.models.functions import TruncMonth
-from django.db.models import Sum
+from tasks.models import Task
 
 
-# ==============================
+# ==========================================
 # Dashboard Statistics
-# ==============================
+# ==========================================
 
 class DashboardStatsView(
     APIView
@@ -32,17 +37,13 @@ class DashboardStatsView(
         request
     ):
 
-        # ==============================
-        # Customer Metrics
-        # ==============================
+        # Customers
 
         total_customers = (
             Customer.objects.count()
         )
 
-        # ==============================
-        # Lead Metrics
-        # ==============================
+        # Leads
 
         total_leads = (
             Lead.objects.count()
@@ -66,9 +67,7 @@ class DashboardStatsView(
             ).count()
         )
 
-        # ==============================
-        # Deal Metrics
-        # ==============================
+        # Deals
 
         total_deals = (
             Deal.objects.count()
@@ -90,14 +89,12 @@ class DashboardStatsView(
             Deal.objects.exclude(
                 stage__in=[
                     "WON",
-                    "LOST"
+                    "LOST",
                 ]
             ).count()
         )
 
-        # ==============================
-        # Revenue Metrics
-        # ==============================
+        # Revenue
 
         total_revenue = (
             Deal.objects.filter(
@@ -115,13 +112,12 @@ class DashboardStatsView(
             or 0
         )
 
-        # ==============================
-        # KPI Metrics
-        # ==============================
+        # KPIs
 
         lead_conversion_rate = 0
 
         if total_leads > 0:
+
             lead_conversion_rate = round(
                 (
                     converted_leads
@@ -133,6 +129,7 @@ class DashboardStatsView(
         deal_win_rate = 0
 
         if total_deals > 0:
+
             deal_win_rate = round(
                 (
                     won_deals
@@ -141,17 +138,15 @@ class DashboardStatsView(
                 2
             )
 
-        # ==============================
-        # Response
-        # ==============================
-
         return Response({
 
             # Customers
+
             "total_customers":
                 total_customers,
 
             # Leads
+
             "total_leads":
                 total_leads,
 
@@ -165,6 +160,7 @@ class DashboardStatsView(
                 converted_leads,
 
             # Deals
+
             "total_deals":
                 total_deals,
 
@@ -178,23 +174,26 @@ class DashboardStatsView(
                 active_deals,
 
             # Revenue
+
             "total_revenue":
                 total_revenue,
 
             "average_deal_value":
                 average_deal_value,
 
-            # KPIs
+            # KPI
+
             "lead_conversion_rate":
                 lead_conversion_rate,
 
             "deal_win_rate":
                 deal_win_rate,
         })
-    
-# ==============================
+
+
+# ==========================================
 # Sales Funnel Analytics
-# ==============================
+# ==========================================
 
 class DashboardFunnelView(
     APIView
@@ -209,57 +208,38 @@ class DashboardFunnelView(
         request
     ):
 
-        new_leads = (
-            Lead.objects.filter(
-                status="NEW"
-            ).count()
-        )
-
-        contacted_leads = (
-            Lead.objects.filter(
-                status="CONTACTED"
-            ).count()
-        )
-
-        qualified_leads = (
-            Lead.objects.filter(
-                status="QUALIFIED"
-            ).count()
-        )
-
-        converted_leads = (
-            Lead.objects.filter(
-                status="CONVERTED"
-            ).count()
-        )
-
-        closed_leads = (
-            Lead.objects.filter(
-                status="CLOSED"
-            ).count()
-        )
-
         return Response({
 
             "new":
-                new_leads,
+                Lead.objects.filter(
+                    status="NEW"
+                ).count(),
 
             "contacted":
-                contacted_leads,
+                Lead.objects.filter(
+                    status="CONTACTED"
+                ).count(),
 
             "qualified":
-                qualified_leads,
+                Lead.objects.filter(
+                    status="QUALIFIED"
+                ).count(),
 
             "converted":
-                converted_leads,
+                Lead.objects.filter(
+                    status="CONVERTED"
+                ).count(),
 
             "closed":
-                closed_leads,
+                Lead.objects.filter(
+                    status="CLOSED"
+                ).count(),
         })
-    
-# ==============================
+
+
+# ==========================================
 # Monthly Revenue Analytics
-# ==============================
+# ==========================================
 
 class DashboardRevenueView(
     APIView
@@ -275,22 +255,27 @@ class DashboardRevenueView(
     ):
 
         revenue_data = (
+
             Deal.objects.filter(
                 stage="WON"
             )
+
             .annotate(
                 month=TruncMonth(
                     "created_at"
                 )
             )
+
             .values(
                 "month"
             )
+
             .annotate(
                 revenue=Sum(
                     "deal_value"
                 )
             )
+
             .order_by(
                 "month"
             )
@@ -314,3 +299,146 @@ class DashboardRevenueView(
         return Response(
             response_data
         )
+
+
+# ==========================================
+# Lead Status Chart
+# ==========================================
+
+class LeadChartView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get(
+        self,
+        request
+    ):
+
+        data = (
+
+            Lead.objects
+
+            .values(
+                "status"
+            )
+
+            .annotate(
+                count=Count(
+                    "id"
+                )
+            )
+        )
+
+        return Response(data)
+
+
+# ==========================================
+# Deal Stage Chart
+# ==========================================
+
+class DealChartView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get(
+        self,
+        request
+    ):
+
+        data = (
+
+            Deal.objects
+
+            .values(
+                "stage"
+            )
+
+            .annotate(
+                count=Count(
+                    "id"
+                )
+            )
+        )
+
+        return Response(data)
+
+
+# ==========================================
+# Task Status Chart
+# ==========================================
+
+class TaskChartView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get(
+        self,
+        request
+    ):
+
+        data = (
+
+            Task.objects
+
+            .values(
+                "status"
+            )
+
+            .annotate(
+                count=Count(
+                    "id"
+                )
+            )
+        )
+
+        return Response(data)
+
+
+# ==========================================
+# Revenue Summary Card
+# ==========================================
+
+class RevenueChartView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get(
+        self,
+        request
+    ):
+
+        revenue = (
+
+            Deal.objects.filter(
+                stage="WON"
+            )
+
+            .aggregate(
+                total=Sum(
+                    "deal_value"
+                )
+            )
+        )
+
+        return Response({
+
+            "revenue":
+                revenue["total"]
+                or 0
+        })

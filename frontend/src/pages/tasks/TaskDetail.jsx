@@ -5,10 +5,11 @@ import {
 
 import {
   useParams,
+  useNavigate
 } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
-import BackButton from "../../components/common/BackButton";
+import PageActions from "../../components/common/PageActions";
 
 import api from "../../api/api";
 
@@ -16,6 +17,8 @@ function TaskDetail() {
 
   const { id } =
     useParams();
+
+  const navigate = useNavigate();
 
   const [task, setTask] =
     useState(null);
@@ -28,6 +31,37 @@ function TaskDetail() {
     fetchTask();
 
   }, []);
+
+  const handleDelete =
+    async () => {
+
+      if (
+        !window.confirm(
+          "Delete this task?"
+        )
+      ) return;
+
+      try {
+
+        await api.delete(
+          `tasks/${id}/`
+        );
+
+        alert(
+          "Task deleted successfully"
+        );
+
+        navigate(
+          "/tasks"
+        );
+
+      } catch (error) {
+
+        console.log(
+          error.response?.data
+        );
+      }
+    };
 
   const fetchTask =
     async () => {
@@ -123,9 +157,11 @@ function TaskDetail() {
 
     <MainLayout>
 
-      <BackButton
-        path="/tasks"
-        title="Tasks"
+      <PageActions
+        backPath="/tasks"
+        backTitle="Tasks"
+        editPath={`/tasks/${id}/edit`}
+        onDelete={handleDelete}
       />
 
       <div

@@ -11,6 +11,10 @@ from activities.services import (
     create_activity_log
 )
 
+from notifications.services import (
+    create_notification
+)
+
 class CustomerListCreateView(generics.ListCreateAPIView):
 
     queryset = Customer.objects.all().order_by("-created_at")
@@ -42,6 +46,16 @@ class CustomerListCreateView(generics.ListCreateAPIView):
             action_type="CUSTOMER_CREATED",
             description=
             f"Customer '{customer.name}' created"
+        )
+
+        create_notification(
+
+            user=self.request.user,
+
+            title="Customer Created",
+
+            message=
+            f"Customer '{customer.name}' created successfully."
         )
 
 

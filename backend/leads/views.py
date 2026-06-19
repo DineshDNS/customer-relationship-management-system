@@ -23,6 +23,7 @@ from notifications.services import (
     create_notification
 )
 
+
 # ==============================
 # Lead List & Create
 # ==============================
@@ -70,6 +71,16 @@ class LeadListCreateView(
             action_type="LEAD_CREATED",
             description=
             f"Lead created for {lead.customer.name}"
+        )
+
+        create_notification(
+
+            user=self.request.user,
+
+            title="Lead Created",
+
+            message=
+            f"Lead for '{lead.customer.name}' created."
         )
 
 
@@ -176,7 +187,17 @@ class LeadStatusUpdateView(
 
         description=
         f"Lead #{lead.id} moved to {new_status}"
-    )
+        )
+
+        create_notification(
+
+            user=request.user,
+
+            title="Lead Status Updated",
+
+            message=
+            f"Lead moved to {new_status}"
+        )
 
         return Response(
             {
@@ -249,13 +270,14 @@ class LeadAssignView(
 
         create_notification(
 
-            user=user,
+            user=lead.assigned_to,
+
 
             title=
             "New Lead Assigned",
 
             message=
-            f"Lead #{lead.id} assigned to you."
+            f"Lead for '{lead.customer.name}' assigned to you."
         )
 
         return Response(

@@ -11,32 +11,104 @@ from "../../layouts/MainLayout";
 import StatCard
 from "../../components/common/StatCard";
 
+import LeadChart
+from "../../components/charts/LeadChart";
+
+import DealChart
+from "../../components/charts/DealChart";
+
+import TaskChart
+from "../../components/charts/TaskChart";
+
+import RevenueChart
+from "../../components/charts/RevenueChart";
+
 function Dashboard() {
 
   const [stats, setStats] =
     useState(null);
+
+  const [leadData, setLeadData] =
+    useState([]);
+
+  const [dealData, setDealData] =
+    useState([]);
+
+  const [taskData, setTaskData] =
+    useState([]);
+
+  const [revenueData,
+    setRevenueData] =
+    useState([]);
 
   const [loading, setLoading] =
     useState(true);
 
   useEffect(() => {
 
-    fetchStats();
+    fetchDashboard();
 
   }, []);
 
-  const fetchStats =
+  const fetchDashboard =
     async () => {
 
       try {
 
-        const response =
-          await api.get(
+        const [
+
+          statsRes,
+
+          leadRes,
+
+          dealRes,
+
+          taskRes,
+
+          revenueRes,
+
+        ] = await Promise.all([
+
+          api.get(
             "dashboard/stats/"
-          );
+          ),
+
+          api.get(
+            "dashboard/lead-chart/"
+          ),
+
+          api.get(
+            "dashboard/deal-chart/"
+          ),
+
+          api.get(
+            "dashboard/task-chart/"
+          ),
+
+          api.get(
+            "dashboard/revenue/"
+          ),
+
+        ]);
 
         setStats(
-          response.data
+          statsRes.data
+        );
+
+        setLeadData(
+          leadRes.data
+        );
+
+        setDealData(
+          dealRes.data
+        );
+
+        setTaskData(
+          taskRes.data
+        );
+
+        setRevenueData(
+          revenueRes.data
         );
 
       } catch (error) {
@@ -55,9 +127,7 @@ function Dashboard() {
 
       <MainLayout>
 
-        <h1>
-          Loading Dashboard...
-        </h1>
+        Loading Dashboard...
 
       </MainLayout>
     );
@@ -84,6 +154,7 @@ function Dashboard() {
         md:grid-cols-2
         lg:grid-cols-4
         gap-6
+        mb-8
       "
       >
 
@@ -127,11 +198,35 @@ function Dashboard() {
 
       <div
         className="
-        mt-8
-
         grid
         lg:grid-cols-2
+        gap-6
+        mb-8
+      "
+      >
 
+        <LeadChart
+          data={leadData}
+        />
+
+        <DealChart
+          data={dealData}
+        />
+
+        <TaskChart
+          data={taskData}
+        />
+
+        <RevenueChart
+          data={revenueData}
+        />
+
+      </div>
+
+      <div
+        className="
+        grid
+        md:grid-cols-2
         gap-6
       "
       >

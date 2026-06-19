@@ -66,6 +66,11 @@ from "../pages/users/UserDetail";
 import NotificationList
 from "../pages/notifications/NotificationList";
 
+import CustomerUpdate from "../pages/customers/CustomerUpdate";
+import LeadUpdate from "../pages/leads/LeadUpdate";
+import DealUpdate from "../pages/deals/DealUpdate";
+import TaskUpdate from "../pages/tasks/TaskUpdate";
+
 function AppRoutes() {
 
   return (
@@ -282,6 +287,26 @@ function AppRoutes() {
         element={
           <NotificationList />
         }
+      />
+
+      <Route
+        path="/customers/:id/edit"
+        element={<CustomerUpdate />}
+      />
+
+      <Route
+        path="/leads/:id/edit"
+        element={<LeadUpdate />}
+      />
+
+      <Route
+        path="/deals/:id/edit"
+        element={<DealUpdate />}
+      />
+
+      <Route
+        path="/tasks/:id/edit"
+        element={<TaskUpdate />}
       />
 
       </Routes>

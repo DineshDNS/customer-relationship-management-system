@@ -34,48 +34,59 @@ function Topbar() {
     setNotificationCount] =
     useState(0);
 
-  useEffect(() => {
+ useEffect(() => {
 
-    fetchNotifications();
+  fetchNotifications();
 
-  }, []);
+  const interval =
+    setInterval(
+      fetchNotifications,
+      5000
+    );
 
-  const fetchNotifications =
-    async () => {
+  return () =>
+    clearInterval(
+      interval
+    );
 
-      try {
+}, []);
 
-        const response =
-          await api.get(
-            "notifications/"
-          );
+ const fetchNotifications =
+  async () => {
 
-        const notifications =
+    try {
 
-          Array.isArray(
-            response.data
-          )
-
-          ? response.data
-
-          : response.data.results || [];
-
-        const unreadCount =
-
-          notifications.filter(
-            (item) =>
-              !item.is_read
-          ).length;
-
-        setNotificationCount(
-          unreadCount
+      const response =
+        await api.get(
+          "notifications/"
         );
 
-      } catch (error) {
+      const notifications =
 
-        console.log(error);
-      }
-    };
+        Array.isArray(
+          response.data
+        )
+
+        ? response.data
+
+        : response.data.results || [];
+
+      setNotificationCount(
+
+        notifications.filter(
+          (notification) =>
+            !notification.is_read
+        ).length
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Notification Error:",
+        error
+      );
+    }
+  };
 
   const handleLogout = () => {
 

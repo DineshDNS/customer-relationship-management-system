@@ -28,6 +28,10 @@ from activities.services import (
     create_activity_log
 )
 
+from notifications.services import (
+    create_notification
+)
+
 # ==============================
 # Deal List & Create
 # ==============================
@@ -73,6 +77,16 @@ class DealListCreateView(
 
             description=
             f"Deal '{deal.deal_name}' created"
+        )
+
+        create_notification(
+
+            user=self.request.user,
+
+            title="Deal Created",
+
+            message=
+            f"Deal '{deal.deal_name}' created."
         )
 
 
@@ -174,6 +188,16 @@ class DealStageUpdateView(
 
             description=
             f"Deal '{deal.deal_name}' moved to {new_stage}"
+        )
+
+        create_notification(
+
+            user=request.user,
+
+            title="Deal Stage Updated",
+
+            message=
+            f"Deal moved to {new_stage}"
         )
 
         return Response(

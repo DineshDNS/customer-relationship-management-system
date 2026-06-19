@@ -5,10 +5,11 @@ import {
 
 import {
   useParams,
+  useNavigate,
 } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
-import BackButton from "../../components/common/BackButton";
+import PageActions from "../../components/common/PageActions";
 import api from "../../api/api";
 
 function DealDetail() {
@@ -21,6 +22,9 @@ function DealDetail() {
 
   const [stage, setStage] =
     useState("");
+  
+  const navigate =
+    useNavigate();
 
   useEffect(() => {
 
@@ -51,6 +55,37 @@ function DealDetail() {
         console.log(error);
       }
     };
+
+    const handleDelete =
+      async () => {
+
+        if (
+          !window.confirm(
+            "Delete this deal?"
+          )
+        ) return;
+
+        try {
+
+          await api.delete(
+            `deals/${id}/`
+          );
+
+          alert(
+            "Deal deleted successfully"
+          );
+
+          navigate(
+            "/deals"
+          );
+
+        } catch (error) {
+
+          console.log(
+            error.response?.data
+          );
+        }
+      };
 
   const updateStage =
     async () => {
@@ -103,9 +138,11 @@ function DealDetail() {
 
     <MainLayout>
 
-      <BackButton
-        path="/deals"
-        title="Deals"
+      <PageActions
+        backPath="/deals"
+        backTitle="Deals"
+        editPath={`/deals/${id}/edit`}
+        onDelete={handleDelete}
       />
 
       <div

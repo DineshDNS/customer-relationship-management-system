@@ -5,11 +5,14 @@ import {
 
 import {
   useParams,
+  useNavigate,
 } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
-import BackButton from "../../components/common/BackButton";
 import api from "../../api/api";
+
+import PageActions from
+"../../components/common/PageActions";
 
 function CustomerDetail() {
 
@@ -19,11 +22,47 @@ function CustomerDetail() {
   const [customer, setCustomer] =
     useState(null);
 
+  const navigate =
+    useNavigate();
+
   useEffect(() => {
 
     fetchCustomer();
 
   }, []);
+
+  const handleDelete =
+      async () => {
+
+        const confirmDelete =
+          window.confirm(
+            "Delete this customer?"
+          );
+
+        if (!confirmDelete)
+          return;
+
+        try {
+
+          await api.delete(
+            `customers/${id}/`
+          );
+
+          alert(
+            "Customer deleted successfully"
+          );
+
+          navigate(
+            "/customers"
+          );
+
+        } catch (error) {
+
+          console.log(
+            error.response?.data
+          );
+        }
+      };
 
   const fetchCustomer =
     async () => {
@@ -70,9 +109,11 @@ function CustomerDetail() {
 
     <MainLayout>
 
-      <BackButton
-        path="/customers"
-        title="Customers"
+      <PageActions
+        backPath="/customers"
+        backTitle="Customers"
+        editPath={`/customers/${id}/edit`}
+        onDelete={handleDelete}
       />
 
       <div
