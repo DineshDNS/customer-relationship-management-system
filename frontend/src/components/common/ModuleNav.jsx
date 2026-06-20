@@ -1,55 +1,60 @@
-import {
-  NavLink,
-} from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-function ModuleNav({
-  items,
-}) {
+function ModuleNav({ items }) {
 
   return (
 
     <div
       className="
       flex
+      flex-wrap
       gap-3
       mb-6
-      flex-wrap
     "
     >
 
-      {items.map(
-        (item) => (
+      {items.map((item) => (
 
-          <NavLink
-            key={item.name}
-            to={item.path}
-            className={({
-              isActive,
-            }) =>
-              `
-              px-4
-              py-2
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={({ isActive }) => `
+            px-5
+            py-2
 
-              rounded-xl
+            rounded-full
 
-              font-medium
+            border
 
-              transition-all
+            transition-all
 
-              ${
-                isActive
-                  ? "bg-red-600 text-white"
-                  : "bg-white border border-red-200 hover:bg-red-50"
-              }
-            `
+            font-medium
+
+            ${
+              isActive
+                ? `
+                  bg-red-600
+                  text-white
+                  border-red-600
+                `
+                : `
+                  bg-white
+                  text-red-700
+                  border-red-200
+                  hover:bg-red-50
+                `
             }
-          >
-            {item.name}
-          </NavLink>
-        )
-      )}
+          `}
+        >
+
+          {item.name}
+
+        </NavLink>
+
+      ))}
 
     </div>
+
   );
 }
 

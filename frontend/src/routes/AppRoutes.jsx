@@ -82,6 +82,19 @@ import CommunicationDetail from
 import CommunicationUpdate from
 "../pages/communications/CommunicationUpdate";
 
+import SettingsDashboard from
+"../pages/settings/SettingsDashboard";
+
+import ProfileSettings from
+"../pages/settings/ProfileSettings";
+
+import ChangePassword from
+"../pages/settings/ChangePassword";
+
+import NotificationSettings from "../pages/settings/NotificationSettings";
+import SystemSettings from "../pages/settings/SystemSettings";
+
+
 function AppRoutes() {
 
   return (
@@ -345,6 +358,35 @@ function AppRoutes() {
         path="/communications/:id/edit"
         element={
           <CommunicationUpdate />
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={<SettingsDashboard />}
+      />
+
+      <Route
+        path="/settings/profile"
+        element={<ProfileSettings />}
+      />
+
+      <Route
+        path="/settings/password"
+        element={<ChangePassword />}
+      />
+
+      <Route
+        path="/settings/notifications"
+        element={
+          <NotificationSettings />
+        }
+      />
+
+      <Route
+        path="/settings/system"
+        element={
+          <SystemSettings />
         }
       />
 
