@@ -3,13 +3,17 @@ from django.urls import path
 from .views import (
 
     TaskListCreateView,
+
     TaskDetailView,
 
     TaskStatusUpdateView,
 
     MyTasksView,
-    OverdueTasksView,
+
     TodayTasksView,
+
+    OverdueTasksView,
+
 )
 
 urlpatterns = [
@@ -27,15 +31,15 @@ urlpatterns = [
     ),
 
     path(
-        "overdue/",
-        OverdueTasksView.as_view(),
-        name="overdue-tasks",
-    ),
-
-    path(
         "today/",
         TodayTasksView.as_view(),
         name="today-tasks",
+    ),
+
+    path(
+        "overdue/",
+        OverdueTasksView.as_view(),
+        name="overdue-tasks",
     ),
 
     path(

@@ -6,8 +6,18 @@ import {
 
 function Sidebar() {
 
+  const role =
+    localStorage.getItem(
+      "role"
+    );
+
   const menuItems =
-    MENU_ITEMS;
+    MENU_ITEMS.filter(
+      (item) =>
+        item.roles.includes(
+          role
+        )
+    );
 
   return (
 
@@ -75,8 +85,9 @@ function Sidebar() {
               <NavLink
                 key={item.name}
                 to={item.path}
-                className={({ isActive }) =>
-
+                className={({
+                  isActive,
+                }) =>
                   `
                   flex
                   items-center

@@ -7,14 +7,18 @@ import {
 } from "react-icons/fa";
 
 function PageActions({
+
   backPath,
+
   backTitle,
+
   editPath,
+
   onDelete,
+
 }) {
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   return (
 
@@ -39,12 +43,16 @@ function PageActions({
     "
     >
 
-      {/* Back Button */}
+      {/* ==========================
+          Back Button
+      ========================== */}
 
       <button
+
         onClick={() =>
           navigate(backPath)
         }
+
         className="
         flex
         items-center
@@ -65,79 +73,104 @@ function PageActions({
 
         <FaArrowLeft />
 
-        Back to {backTitle}
+        <span>
+
+          Back to {backTitle}
+
+        </span>
 
       </button>
 
-      {/* Right Buttons */}
+      {/* ==========================
+          Action Buttons
+      ========================== */}
 
       <div
         className="
         flex
+        items-center
         gap-3
       "
       >
 
-        <button
-          onClick={() =>
-            navigate(editPath)
-          }
-          className="
-          flex
-          items-center
-          gap-2
+        {/* Edit Button */}
 
-          bg-blue-600
-          hover:bg-blue-700
+        {editPath && (
 
-          text-white
+          <button
 
-          px-4
-          py-2
+            onClick={() =>
+              navigate(editPath)
+            }
 
-          rounded-lg
+            className="
+            flex
+            items-center
+            gap-2
 
-          transition-all
-        "
-        >
+            bg-blue-600
+            hover:bg-blue-700
 
-          <FaEdit />
+            text-white
 
-          Edit
+            px-5
+            py-2
 
-        </button>
+            rounded-lg
 
-        <button
-          onClick={onDelete}
-          className="
-          flex
-          items-center
-          gap-2
+            transition-all
+          "
+          >
 
-          bg-red-600
-          hover:bg-red-700
+            <FaEdit />
 
-          text-white
+            Edit
 
-          px-4
-          py-2
+          </button>
 
-          rounded-lg
+        )}
 
-          transition-all
-        "
-        >
+        {/* Delete Button */}
 
-          <FaTrash />
+        {onDelete && (
 
-          Delete
+          <button
 
-        </button>
+            onClick={onDelete}
+
+            className="
+            flex
+            items-center
+            gap-2
+
+            bg-red-600
+            hover:bg-red-700
+
+            text-white
+
+            px-5
+            py-2
+
+            rounded-lg
+
+            transition-all
+          "
+          >
+
+            <FaTrash />
+
+            Delete
+
+          </button>
+
+        )}
 
       </div>
 
     </div>
+
   );
+
 }
 
 export default PageActions;

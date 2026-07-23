@@ -1,18 +1,25 @@
 from .models import Notification
 
 
-# ==============================
+# =====================================
 # Create Notification
-# ==============================
+# =====================================
 
 def create_notification(
     user,
     title,
-    message
+    message,
+    notification_type="SYSTEM"
 ):
 
-    Notification.objects.create(
+    return Notification.objects.create(
+
         user=user,
+
+        notification_type=notification_type,
+
         title=title,
-        message=message
+
+        message=message,
+
     )

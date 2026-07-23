@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
 
-function ModuleNav({ items }) {
+function ModuleNav({
+  items,
+}) {
 
   return (
 
@@ -13,45 +15,49 @@ function ModuleNav({ items }) {
     "
     >
 
-      {items.map((item) => (
+      {items.map(
+        (item) => (
 
-        <NavLink
-          key={item.path}
-          to={item.path}
-          className={({ isActive }) => `
-            px-5
-            py-2
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({
+              isActive,
+            }) => `
+              px-5
+              py-2
 
-            rounded-full
+              rounded-full
 
-            border
+              border
 
-            transition-all
+              transition-all
 
-            font-medium
+              font-medium
 
-            ${
-              isActive
-                ? `
-                  bg-red-600
-                  text-white
-                  border-red-600
-                `
-                : `
-                  bg-white
-                  text-red-700
-                  border-red-200
-                  hover:bg-red-50
-                `
-            }
-          `}
-        >
+              ${
+                isActive
+                  ? `
+                    bg-red-600
+                    text-white
+                    border-red-600
+                  `
+                  : `
+                    bg-white
+                    text-red-700
+                    border-red-200
+                    hover:bg-red-50
+                  `
+              }
+            `}
+          >
 
-          {item.name}
+            {item.name}
 
-        </NavLink>
+          </NavLink>
 
-      ))}
+        )
+      )}
 
     </div>
 

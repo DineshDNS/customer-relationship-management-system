@@ -3,16 +3,15 @@ import {
   useState,
 } from "react";
 
-import { Link } from "react-router-dom";
+import {
+  Link,
+} from "react-router-dom";
 
-import MainLayout from
-"../../layouts/MainLayout";
+import MainLayout from "../../layouts/MainLayout";
 
-import api from
-"../../api/api";
+import api from "../../api/api";
 
-import ModuleNav
-from "../../components/common/ModuleNav";
+import ModuleNav from "../../components/common/ModuleNav";
 
 import {
   CUSTOMERS_NAV,
@@ -25,6 +24,9 @@ function CustomerList() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const role =
+    localStorage.getItem("role");
 
   useEffect(() => {
 
@@ -43,7 +45,8 @@ function CustomerList() {
           );
 
         setCustomers(
-          response.data.results || response.data
+          response.data.results ||
+          response.data
         );
 
       } catch (error) {
@@ -53,8 +56,31 @@ function CustomerList() {
       } finally {
 
         setLoading(false);
+
       }
+
     };
+
+  if (loading) {
+
+    return (
+
+      <MainLayout>
+
+        <h2
+          className="
+          text-2xl
+          font-semibold
+        "
+        >
+          Loading Customers...
+        </h2>
+
+      </MainLayout>
+
+    );
+
+  }
 
   return (
 
@@ -75,8 +101,19 @@ function CustomerList() {
           font-bold
         "
         >
-          Customers
+
+          {
+
+            role === "ADMIN"
+
+              ? "All Customers"
+
+              : "My Customers"
+
+          }
+
         </h1>
+
 
       </div>
 
@@ -87,11 +124,8 @@ function CustomerList() {
       <div
         className="
         bg-white
-
         rounded-2xl
-
         shadow-md
-
         overflow-hidden
       "
       >
@@ -137,52 +171,101 @@ function CustomerList() {
 
           <tbody>
 
-            {Array.isArray(customers) && 
-            customers.map(
-              (customer) => (
+            {
 
-                <tr
-                  key={customer.id}
-                  className="
-                  border-b
+              customers.length === 0
 
-                  hover:bg-red-50
-                "
-                >
+                ? (
 
-                  <td className="p-4">
-                    {customer.name}
-                  </td>
+                  <tr>
 
-                  <td className="p-4">
-                    {customer.company}
-                  </td>
-
-                  <td className="p-4">
-                    {customer.email}
-                  </td>
-
-                  <td className="p-4">
-                    {customer.phone}
-                  </td>
-
-                  <td className="p-4">
-
-                    <Link
-                      to={`/customers/${customer.id}`}
+                    <td
+                      colSpan="5"
                       className="
-                      text-red-600
-                      font-semibold
+                      text-center
+                      p-8
+                      text-gray-500
                     "
                     >
-                      View
-                    </Link>
 
-                  </td>
+                      No customers found.
 
-                </tr>
-              )
-            )}
+                    </td>
+
+                  </tr>
+
+                )
+
+                : (
+
+                  customers.map(
+
+                    (customer) => (
+
+                      <tr
+
+                        key={customer.id}
+
+                        className="
+                        border-b
+                        hover:bg-red-50
+                      "
+
+                      >
+
+                        <td className="p-4">
+
+                          {customer.name}
+
+                        </td>
+
+                        <td className="p-4">
+
+                          {customer.company}
+
+                        </td>
+
+                        <td className="p-4">
+
+                          {customer.email}
+
+                        </td>
+
+                        <td className="p-4">
+
+                          {customer.phone}
+
+                        </td>
+
+                        <td className="p-4">
+
+                          <Link
+
+                            to={`/customers/${customer.id}`}
+
+                            className="
+                            text-red-600
+                            font-semibold
+                            hover:underline
+                          "
+
+                          >
+
+                            View
+
+                          </Link>
+
+                        </td>
+
+                      </tr>
+
+                    )
+
+                  )
+
+                )
+
+            }
 
           </tbody>
 
@@ -191,7 +274,9 @@ function CustomerList() {
       </div>
 
     </MainLayout>
+
   );
+
 }
 
 export default CustomerList;

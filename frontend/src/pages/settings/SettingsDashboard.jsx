@@ -15,6 +15,11 @@ function SettingsDashboard() {
   const navigate =
     useNavigate();
 
+  const role =
+  localStorage.getItem(
+    "role"
+  );
+
   return (
 
     <MainLayout>
@@ -207,65 +212,69 @@ function SettingsDashboard() {
 
         </div>
 
-        {/* CRM Settings */}
+       {/* CRM Settings */}
 
-        <div
-          onClick={() =>
-            navigate(
-              "/settings/system"
-            )
-          }
-          className="
-          bg-white
-          p-8
+      {
+        role !== "SALES_EXECUTIVE" && (
 
-          rounded-3xl
-
-          shadow-md
-
-          cursor-pointer
-
-          hover:-translate-y-2
-          hover:shadow-xl
-
-          transition-all
-          duration-300
-        "
-        >
-
-          <FaCog
+          <div
+            onClick={() =>
+              navigate(
+                "/settings/system"
+              )
+            }
             className="
-            text-green-600
-            text-5xl
-            mb-5
-          "
-          />
+            bg-white
+            p-8
 
-          <h2
-            className="
-            text-2xl
-            font-bold
-            mb-3
+            rounded-3xl
+
+            shadow-md
+
+            cursor-pointer
+
+            hover:-translate-y-2
+            hover:shadow-xl
+
+            transition-all
+            duration-300
           "
           >
-            CRM Settings
-          </h2>
 
-          <p
-            className="
-            text-gray-600
-            text-lg
-          "
-          >
-            Configure CRM
-            preferences and
-            application options.
-          </p>
+            <FaCog
+              className="
+              text-green-600
+              text-5xl
+              mb-5
+            "
+            />
 
-        </div>
+            <h2
+              className="
+              text-2xl
+              font-bold
+              mb-3
+            "
+            >
+              CRM Settings
+            </h2>
 
+            <p
+              className="
+              text-gray-600
+              text-lg
+            "
+            >
+              Configure CRM
+              preferences and
+              application options.
+            </p>
+
+          </div>
+
+        )
+      }
       </div>
-
     </MainLayout>
   );
 }

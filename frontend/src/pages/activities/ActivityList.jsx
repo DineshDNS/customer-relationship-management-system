@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -16,8 +17,7 @@ import {
 
 import MainLayout from "../../layouts/MainLayout";
 
-import ModuleNav from
-"../../components/common/ModuleNav";
+import ModuleNav from "../../components/common/ModuleNav";
 
 import {
   ACTIVITIES_NAV,
@@ -27,8 +27,21 @@ import api from "../../api/api";
 
 function ActivityList() {
 
-  const [activities, setActivities] =
+  const [activities,
+    setActivities] =
     useState([]);
+
+  const [loading,
+    setLoading] =
+    useState(true);
+
+  const [search,
+    setSearch] =
+    useState("");
+
+  const [actionFilter,
+    setActionFilter] =
+    useState("ALL");
 
   useEffect(() => {
 
@@ -39,6 +52,8 @@ function ActivityList() {
   const fetchActivities =
     async () => {
 
+      setLoading(true);
+
       try {
 
         const response =
@@ -46,144 +61,227 @@ function ActivityList() {
             "activities/"
           );
 
-        setActivities(
-          Array.isArray(response.data)
-            ? response.data
-            : response.data.results || []
-        );
+        const data =
 
-      } catch (error) {
+          Array.isArray(
+            response.data
+          )
+
+          ?
+
+          response.data
+
+          :
+
+          response.data.results || [];
+
+        setActivities(data);
+
+      }
+
+      catch (error) {
 
         console.log(error);
+
       }
+
+      finally {
+
+        setLoading(false);
+
+      }
+
     };
 
-  const getIcon =
-  (actionType) => {
+  const filteredActivities =
+    useMemo(() => {
 
-    switch (actionType) {
+      return activities.filter(
 
-      case "CUSTOMER_CREATED":
+        (activity) => {
 
-        return (
-          <FaUserPlus
-            className="
-            text-blue-600
-            text-2xl
-          "
-          />
-        );
+          const matchSearch =
 
-      case "LEAD_CREATED":
+            activity.description
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              )
 
-        return (
-          <FaBullseye
-            className="
-            text-purple-600
-            text-2xl
-          "
-          />
-        );
+            ||
 
-      case "LEAD_ASSIGNED":
+            activity.username
+              ?.toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
 
-        return (
-          <FaBullseye
-            className="
-            text-orange-600
-            text-2xl
-          "
-          />
-        );
+          const matchAction =
 
-      case "LEAD_STATUS_CHANGED":
+            actionFilter === "ALL"
 
-        return (
-          <FaExchangeAlt
-            className="
-            text-yellow-600
-            text-2xl
-          "
-          />
-        );
+            ||
 
-      case "DEAL_CREATED":
+            activity.action_type === actionFilter;
 
-        return (
-          <FaMoneyBillWave
-            className="
-            text-green-600
-            text-2xl
-          "
-          />
-        );
+          return (
 
-      case "DEAL_STAGE_CHANGED":
+            matchSearch
 
-        return (
-          <FaChartLine
-            className="
-            text-red-600
-            text-2xl
-          "
-          />
-        );
+            &&
 
-      case "TASK_CREATED":
+            matchAction
 
-        return (
-          <FaTasks
-            className="
-            text-indigo-600
-            text-2xl
-          "
-          />
-        );
+          );
 
-      case "TASK_COMPLETED":
+        }
 
-        return (
-          <FaCheckCircle
-            className="
-            text-green-700
-            text-2xl
-          "
-          />
-        );
+      );
 
-      default:
+    }, [
 
-        return (
-          <FaHistory
-            className="
-            text-gray-600
-            text-2xl
-          "
-          />
-        );
-    }
+      activities,
+
+      search,
+
+      actionFilter,
+
+    ]);
+
+  const stats = {
+
+    total:
+
+      activities.length,
+
+    today:
+
+      activities.filter(
+
+        (activity) => {
+
+          const today =
+
+            new Date()
+
+            .toISOString()
+
+            .split("T")[0];
+
+          return activity.created_at.startsWith(today);
+
+        }
+
+      ).length,
+
   };
-  return (
+
+  const getIcon =
+    (actionType) => {
+
+      switch (actionType) {
+
+        case "CUSTOMER_CREATED":
+
+          return (
+            <FaUserPlus className="text-blue-600 text-2xl" />
+          );
+
+        case "LEAD_CREATED":
+
+          return (
+            <FaBullseye className="text-purple-600 text-2xl" />
+          );
+
+        case "LEAD_ASSIGNED":
+
+          return (
+            <FaBullseye className="text-orange-600 text-2xl" />
+          );
+
+        case "LEAD_STATUS_CHANGED":
+
+          return (
+            <FaExchangeAlt className="text-yellow-600 text-2xl" />
+          );
+
+        case "DEAL_CREATED":
+
+          return (
+            <FaMoneyBillWave className="text-green-600 text-2xl" />
+          );
+
+        case "DEAL_STAGE_CHANGED":
+
+          return (
+            <FaChartLine className="text-red-600 text-2xl" />
+          );
+
+        case "TASK_CREATED":
+
+          return (
+            <FaTasks className="text-indigo-600 text-2xl" />
+          );
+
+        case "TASK_COMPLETED":
+
+          return (
+            <FaCheckCircle className="text-green-700 text-2xl" />
+          );
+
+        default:
+
+          return (
+            <FaHistory className="text-gray-600 text-2xl" />
+          );
+
+      }
+
+    };
+
+      return (
 
     <MainLayout>
+
+      {/* Header */}
 
       <div
         className="
         flex
+
         justify-between
+
         items-center
+
         mb-6
       "
       >
 
-        <h1
-          className="
-          text-3xl
-          font-bold
-        "
-        >
-          Activities
-        </h1>
+        <div>
+
+          <h1
+            className="
+            text-3xl
+
+            font-bold
+
+            text-gray-800
+          "
+          >
+            Activity Timeline
+          </h1>
+
+          <p
+            className="
+            text-gray-500
+
+            mt-1
+          "
+          >
+            Monitor all CRM activities in one place.
+          </p>
+
+        </div>
 
       </div>
 
@@ -191,17 +289,248 @@ function ActivityList() {
         items={ACTIVITIES_NAV}
       />
 
+      {/* Dashboard */}
+
       <div
         className="
-        space-y-4
+        grid
+
+        md:grid-cols-2
+
+        gap-6
+
+        my-6
       "
       >
 
-        {activities.map(
-          (activity) => (
+        <div
+          className="
+          bg-white
+
+          rounded-2xl
+
+          shadow
+
+          p-6
+        "
+        >
+
+          <p
+            className="
+            text-gray-500
+          "
+          >
+            Total Activities
+          </p>
+
+          <h2
+            className="
+            text-4xl
+
+            font-bold
+
+            mt-2
+          "
+          >
+            {stats.total}
+          </h2>
+
+        </div>
+
+        <div
+          className="
+          bg-white
+
+          rounded-2xl
+
+          shadow
+
+          p-6
+        "
+        >
+
+          <p
+            className="
+            text-gray-500
+          "
+          >
+            Today's Activities
+          </p>
+
+          <h2
+            className="
+            text-4xl
+
+            font-bold
+
+            text-red-600
+
+            mt-2
+          "
+          >
+            {stats.today}
+          </h2>
+
+        </div>
+
+      </div>
+
+      {/* Search & Filter */}
+
+      <div
+        className="
+        bg-white
+
+        rounded-2xl
+
+        shadow
+
+        p-5
+
+        mb-6
+
+        flex
+
+        flex-col
+
+        lg:flex-row
+
+        gap-4
+      "
+      >
+
+        <input
+
+          type="text"
+
+          value={search}
+
+          placeholder="Search activities..."
+
+          onChange={(e)=>
+
+            setSearch(
+              e.target.value
+            )
+
+          }
+
+          className="
+          flex-1
+
+          border
+
+          border-red-200
+
+          rounded-xl
+
+          p-3
+
+          outline-none
+
+          focus:ring-2
+
+          focus:ring-red-500
+        "
+        />
+
+        <select
+
+          value={actionFilter}
+
+          onChange={(e)=>
+
+            setActionFilter(
+              e.target.value
+            )
+
+          }
+
+          className="
+          border
+
+          border-red-200
+
+          rounded-xl
+
+          p-3
+        "
+        >
+
+          <option value="ALL">
+
+            All Activities
+
+          </option>
+
+          <option value="CUSTOMER_CREATED">
+
+            Customer Created
+
+          </option>
+
+          <option value="LEAD_CREATED">
+
+            Lead Created
+
+          </option>
+
+          <option value="LEAD_ASSIGNED">
+
+            Lead Assigned
+
+          </option>
+
+          <option value="LEAD_STATUS_CHANGED">
+
+            Lead Status Changed
+
+          </option>
+
+          <option value="DEAL_CREATED">
+
+            Deal Created
+
+          </option>
+
+          <option value="DEAL_STAGE_CHANGED">
+
+            Deal Stage Changed
+
+          </option>
+
+          <option value="TASK_CREATED">
+
+            Task Created
+
+          </option>
+
+          <option value="TASK_COMPLETED">
+
+            Task Completed
+
+          </option>
+
+        </select>
+
+      </div>
+
+      {/* Timeline */}
+
+      <div
+        className="
+        relative
+
+        pl-10
+      "
+      >
+                {
+
+          loading ?
+
+          (
 
             <div
-              key={activity.id}
               className="
               bg-white
 
@@ -209,86 +538,293 @@ function ActivityList() {
 
               shadow-md
 
-              p-5
+              p-10
 
-              flex
-              items-start
-              gap-4
+              text-center
             "
             >
 
-              <div
+              <h2
                 className="
-                w-12
-                h-12
+                text-xl
 
-                rounded-full
-
-                bg-red-50
-
-                flex
-                items-center
-                justify-center
-
-                flex-shrink-0
-                "
-                >
-                {
-                    getIcon(
-                    activity.action_type
-                    )
-                }
-                </div>
-
-              <div
-                className="
-                flex-1
+                font-semibold
               "
               >
 
-                <h3
-                  className="
-                  font-bold
-                  text-gray-800
-                "
-                >
-                  {activity.username}
-                </h3>
+                Loading Activities...
 
-                <p
-                  className="
-                  text-gray-600
-                "
-                >
-                  {
-                    activity.description
-                  }
-                </p>
-
-                <p
-                  className="
-                  text-sm
-                  text-gray-400
-                  mt-2
-                "
-                >
-                  {
-                    new Date(
-                      activity.created_at
-                    ).toLocaleString()
-                  }
-                </p>
-
-              </div>
+              </h2>
 
             </div>
+
           )
-        )}
+
+          :
+
+          filteredActivities.length === 0 ?
+
+          (
+
+            <div
+              className="
+              bg-white
+
+              rounded-2xl
+
+              shadow-md
+
+              p-10
+
+              text-center
+            "
+            >
+
+              <h2
+                className="
+                text-2xl
+
+                font-bold
+              "
+              >
+
+                No Activities Found
+
+              </h2>
+
+              <p
+                className="
+                text-gray-500
+
+                mt-2
+              "
+              >
+
+                Try changing your search or filters.
+
+              </p>
+
+            </div>
+
+          )
+
+          :
+
+          (
+
+            filteredActivities.map(
+
+              (activity, index) => (
+
+                <div
+
+                  key={activity.id}
+
+                  className="
+                  relative
+
+                  flex
+
+                  gap-5
+
+                  pb-8
+                "
+
+                >
+
+                  {
+
+                    index !==
+
+                    filteredActivities.length - 1
+
+                    &&
+
+                    (
+
+                      <div
+                        className="
+                        absolute
+
+                        left-6
+
+                        top-12
+
+                        w-1
+
+                        h-full
+
+                        bg-red-100
+                      "
+                      />
+
+                    )
+
+                  }
+
+                  {/* Icon */}
+
+                  <div
+                    className="
+                    w-12
+
+                    h-12
+
+                    rounded-full
+
+                    bg-red-50
+
+                    flex
+
+                    items-center
+
+                    justify-center
+
+                    z-10
+
+                    shadow-sm
+                  "
+                  >
+
+                    {
+
+                      getIcon(
+
+                        activity.action_type
+
+                      )
+
+                    }
+
+                  </div>
+
+                  {/* Card */}
+
+                  <div
+                    className="
+                    flex-1
+
+                    bg-white
+
+                    rounded-2xl
+
+                    shadow-md
+
+                    p-5
+
+                    hover:shadow-lg
+
+                    transition-all
+                  "
+                  >
+
+                    <div
+                      className="
+                      flex
+
+                      justify-between
+
+                      items-start
+
+                      gap-5
+                    "
+                    >
+
+                      <div>
+
+                        <h3
+                          className="
+                          font-bold
+
+                          text-lg
+
+                          text-gray-800
+                        "
+                        >
+
+                          {activity.username}
+
+                        </h3>
+
+                        <p
+                          className="
+                          text-gray-600
+
+                          mt-2
+
+                          leading-7
+                        "
+                        >
+
+                          {activity.description}
+
+                        </p>
+
+                      </div>
+
+                      <span
+                        className="
+                        text-xs
+
+                        bg-red-100
+
+                        text-red-700
+
+                        px-3
+
+                        py-1
+
+                        rounded-full
+
+                        whitespace-nowrap
+                      "
+                      >
+
+                        {activity.action_type}
+
+                      </span>
+
+                    </div>
+
+                    <div
+                      className="
+                      mt-5
+
+                      text-sm
+
+                      text-gray-400
+                    "
+                    >
+
+                      {
+
+                        new Date(
+
+                          activity.created_at
+
+                        ).toLocaleString()
+
+                      }
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              )
+
+            )
+
+          )
+
+        }
 
       </div>
+          </MainLayout>
 
-    </MainLayout>
   );
+
 }
 
 export default ActivityList;

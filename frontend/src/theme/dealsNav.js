@@ -6,8 +6,8 @@ export const DEALS_NAV = [
   },
 
   {
-    name: "Create Deal",
-    path: "/deals/create",
+    name: "My Deals",
+    path: "/deals/my-deals",
   },
 
 ];

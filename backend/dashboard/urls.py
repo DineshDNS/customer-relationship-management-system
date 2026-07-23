@@ -2,16 +2,19 @@ from django.urls import path
 
 from .views import (
     DashboardStatsView,
-    DashboardFunnelView,
-    DashboardRevenueView,
     LeadChartView,
-    TaskChartView,
-    RevenueChartView,
     DealChartView,
-
+    RecentCustomersView,
+    RecentLeadsView,
+    RecentTasksView,
+    RecentDealsView,
 )
 
 urlpatterns = [
+
+    # ==========================================
+    # Dashboard Statistics
+    # ==========================================
 
     path(
         "stats/",
@@ -19,17 +22,9 @@ urlpatterns = [
         name="dashboard-stats",
     ),
 
-    path(
-        "funnel/",
-        DashboardFunnelView.as_view(),
-        name="dashboard-funnel",
-    ),
-
-    path(
-        "revenue/",
-        DashboardRevenueView.as_view(),
-        name="dashboard-revenue",
-    ),
+    # ==========================================
+    # Dashboard Charts
+    # ==========================================
 
     path(
         "lead-chart/",
@@ -43,16 +38,32 @@ urlpatterns = [
         name="deal-chart",
     ),
 
+    # ==========================================
+    # Recent Data
+    # ==========================================
+
     path(
-        "task-chart/",
-        TaskChartView.as_view(),
-        name="task-chart",
+        "recent-customers/",
+        RecentCustomersView.as_view(),
+        name="recent-customers",
     ),
 
     path(
-        "revenue-chart/",
-        RevenueChartView.as_view(),
-        name="revenue-chart",
+        "recent-leads/",
+        RecentLeadsView.as_view(),
+        name="recent-leads",
+    ),
+
+    path(
+        "recent-tasks/",
+        RecentTasksView.as_view(),
+        name="recent-tasks",
+    ),
+
+    path(
+        "recent-deals/",
+        RecentDealsView.as_view(),
+        name="recent-deals",
     ),
 
 ]

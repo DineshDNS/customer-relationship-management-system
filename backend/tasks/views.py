@@ -1,5 +1,9 @@
-from rest_framework import generics
+from datetime import date
+
+from django.shortcuts import get_object_or_404
+
 from rest_framework import filters
+from rest_framework import generics
 
 from rest_framework.permissions import (
     IsAuthenticated
@@ -9,16 +13,14 @@ from rest_framework.exceptions import (
     PermissionDenied
 )
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from .models import Task
 from .serializers import TaskSerializer
 from .permissions import (
     IsTaskOwnerOrAdminOrManager
 )
-
-from datetime import date
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 
 from .services import (
     validate_task_transition
@@ -37,17 +39,13 @@ from notifications.services import (
 )
 
 
-# ==============================
+# =====================================
 # Task List & Create
-# ==============================
+# =====================================
 
 class TaskListCreateView(
     generics.ListCreateAPIView
 ):
-
-    queryset = Task.objects.all().order_by(
-        "-created_at"
-    )
 
     serializer_class = TaskSerializer
 
@@ -63,7 +61,36 @@ class TaskListCreateView(
         "title",
         "status",
         "task_type",
+        "customer__name",
     ]
+
+    def get_queryset(
+        self
+    ):
+
+        user = self.request.user
+
+        if user.role in [
+
+            "ADMIN",
+
+            "MANAGER",
+
+        ]:
+
+            return Task.objects.all().order_by(
+                "-created_at"
+            )
+
+        return Task.objects.filter(
+
+            assigned_to=user
+
+        ).order_by(
+
+            "-created_at"
+
+        )
 
     def perform_create(
         self,
@@ -78,27 +105,35 @@ class TaskListCreateView(
 
             user=self.request.user,
 
-            action_type=
-            "TASK_CREATED",
+            action_type="TASK_CREATED",
 
-            description=
-            f"Task '{task.title}' created"
+            description=(
+                f"Task '{task.title}' created."
+            )
+
         )
 
         create_notification(
 
             user=task.assigned_to,
 
+            notification_type="TASK",
+
             title="New Task Assigned",
 
-            message=
-            f"Task '{task.title}' assigned to you."
+            message=(
+                f"You have been assigned "
+                f"'{task.title}'."
+            )
+
         )
 
-
-# ==============================
+    # =====================================
 # Task Detail
-# ==============================
+# Retrieve
+# Update
+# Delete
+# =====================================
 
 class TaskDetailView(
     generics.RetrieveUpdateDestroyAPIView
@@ -113,6 +148,83 @@ class TaskDetailView(
         IsTaskOwnerOrAdminOrManager,
     ]
 
+    # ---------------------------------
+    # Update Task
+    # ---------------------------------
+
+    def perform_update(
+        self,
+        serializer
+    ):
+
+        if (
+            self.request.user.role
+            == "SALES_EXECUTIVE"
+        ):
+
+            raise PermissionDenied(
+                "Sales Executives cannot edit tasks."
+            )
+
+        task = serializer.save()
+
+        # Activity Log
+
+        create_activity_log(
+
+            user=self.request.user,
+
+            action_type="TASK_UPDATED",
+
+            description=(
+                f"Task '{task.title}' updated."
+            )
+
+        )
+
+        # Notify Assigned User
+
+        if task.assigned_to:
+
+            create_notification(
+
+                user=task.assigned_to,
+
+                notification_type="TASK",
+
+                title="Task Updated",
+
+                message=(
+                    f"Task '{task.title}' has been updated."
+                )
+
+            )
+
+        # Notify Creator
+
+        if (
+            task.created_by
+            != task.assigned_to
+        ):
+
+            create_notification(
+
+                user=task.created_by,
+
+                notification_type="TASK",
+
+                title="Task Updated",
+
+                message=(
+                    f"Your task '{task.title}' has been updated."
+                )
+
+            )
+
+    # ---------------------------------
+    # Delete Task
+    # ---------------------------------
+
     def perform_destroy(
         self,
         instance
@@ -122,15 +234,69 @@ class TaskDetailView(
             self.request.user.role
             == "SALES_EXECUTIVE"
         ):
+
             raise PermissionDenied(
                 "Sales Executives cannot delete tasks."
             )
 
+        # Activity Log
+
+        create_activity_log(
+
+            user=self.request.user,
+
+            action_type="TASK_DELETED",
+
+            description=(
+                f"Task '{instance.title}' deleted."
+            )
+
+        )
+
+        # Notify Assigned User
+
+        if instance.assigned_to:
+
+            create_notification(
+
+                user=instance.assigned_to,
+
+                notification_type="TASK",
+
+                title="Task Deleted",
+
+                message=(
+                    f"Task '{instance.title}' has been deleted."
+                )
+
+            )
+
+        # Notify Creator
+
+        if (
+            instance.created_by
+            != instance.assigned_to
+        ):
+
+            create_notification(
+
+                user=instance.created_by,
+
+                notification_type="TASK",
+
+                title="Task Deleted",
+
+                message=(
+                    f"Your task '{instance.title}' has been deleted."
+                )
+
+            )
+
         instance.delete()
 
-# ==============================
+# =====================================
 # Task Status Update
-# ==============================
+# =====================================
 
 class TaskStatusUpdateView(
     APIView
@@ -146,75 +312,160 @@ class TaskStatusUpdateView(
         pk
     ):
 
-        task = Task.objects.get(
+        task = get_object_or_404(
+            Task,
             pk=pk
         )
 
-        serializer = (
-            TaskStatusSerializer(
-                data=request.data
-            )
+        # ---------------------------------
+        # Permission
+        # ---------------------------------
+
+        if request.user.role == "SALES_EXECUTIVE":
+
+            if task.assigned_to != request.user:
+
+                raise PermissionDenied(
+                    "You can only update your assigned tasks."
+                )
+
+        serializer = TaskStatusSerializer(
+            data=request.data
         )
 
         serializer.is_valid(
             raise_exception=True
         )
 
-        new_status = (
-            serializer.validated_data[
-                "status"
-            ]
-        )
+        new_status = serializer.validated_data[
+            "status"
+        ]
+
+        # ---------------------------------
+        # Validate Status Flow
+        # ---------------------------------
 
         if not validate_task_transition(
             task.status,
             new_status
         ):
+
             return Response(
                 {
                     "error":
-                    "Invalid task transition"
+                    "Invalid task status transition."
                 },
                 status=400
             )
+
+        old_status = task.status
 
         task.status = new_status
 
         task.save()
 
-        if new_status == "COMPLETED":
+        # ---------------------------------
+        # Activity Log
+        # ---------------------------------
 
-            create_activity_log(
+        create_activity_log(
 
-                user=request.user,
+            user=request.user,
 
-                action_type=
-                "TASK_COMPLETED",
+            action_type="TASK_STATUS_UPDATED",
 
-                description=
-                f"Task '{task.title}' completed"
+            description=(
+                f"Task '{task.title}' "
+                f"changed from "
+                f"{old_status} "
+                f"to "
+                f"{new_status}."
             )
+
+        )
+
+        # ---------------------------------
+        # Notify Assigned User
+        # ---------------------------------
+
+        if task.assigned_to:
 
             create_notification(
 
-                user=request.user,
+                user=task.assigned_to,
 
-                title="Task Completed",
+                notification_type="TASK",
 
-                message=
-                f"Task '{task.title}' completed."
+                title="Task Status Updated",
+
+                message=(
+                    f"Task '{task.title}' "
+                    f"is now "
+                    f"{new_status}."
+                )
+
             )
 
-        return Response(
-            {
-                "message":
-                f"Task moved to {new_status}"
-            }
-        )
-    
-# ==============================
+        # ---------------------------------
+        # Notify Creator
+        # ---------------------------------
+
+        if (
+            task.created_by
+            and
+            task.created_by != task.assigned_to
+        ):
+
+            create_notification(
+
+                user=task.created_by,
+
+                notification_type="TASK",
+
+                title="Task Status Updated",
+
+                message=(
+                    f"Task '{task.title}' "
+                    f"is now "
+                    f"{new_status}."
+                )
+
+            )
+
+        # ---------------------------------
+        # Task Completed
+        # ---------------------------------
+
+        if new_status == "COMPLETED":
+
+            if task.assigned_to:
+
+                create_notification(
+
+                    user=task.assigned_to,
+
+                    notification_type="TASK",
+
+                    title="🎉 Task Completed",
+
+                    message=(
+                        f"Congratulations! "
+                        f"You completed "
+                        f"'{task.title}'."
+                    )
+
+                )
+
+        return Response({
+
+            "message":
+            "Task status updated successfully."
+
+        })
+
+# =====================================
 # My Tasks
-# ==============================
+# =====================================
 
 class MyTasksView(
     generics.ListAPIView
@@ -231,42 +482,21 @@ class MyTasksView(
     ):
 
         return Task.objects.filter(
+
             assigned_to=self.request.user
+
         ).order_by(
-            "due_date"
-        )
-    
-# ==============================
-# Overdue Tasks
-# ==============================
 
-class OverdueTasksView(
-    generics.ListAPIView
-):
+            "due_date",
 
-    serializer_class = TaskSerializer
-
-    permission_classes = [
-        IsAuthenticated
-    ]
-
-    def get_queryset(
-        self
-    ):
-
-        return Task.objects.filter(
-
-            due_date__lt=date.today()
-
-        ).exclude(
-
-            status="COMPLETED"
+            "-created_at",
 
         )
-    
-# ==============================
+
+
+# =====================================
 # Today's Tasks
-# ==============================
+# =====================================
 
 class TodayTasksView(
     generics.ListAPIView
@@ -282,6 +512,93 @@ class TodayTasksView(
         self
     ):
 
-        return Task.objects.filter(
+        user = self.request.user
+
+        queryset = Task.objects.filter(
+
             due_date=date.today()
+
+        )
+
+        if user.role in [
+
+            "ADMIN",
+
+            "MANAGER",
+
+        ]:
+
+            return queryset.order_by(
+
+                "due_date",
+
+                "-created_at",
+
+            )
+
+        return queryset.filter(
+
+            assigned_to=user
+
+        ).order_by(
+
+            "due_date",
+
+            "-created_at",
+
+        )
+
+
+# =====================================
+# Overdue Tasks
+# =====================================
+
+class OverdueTasksView(
+    generics.ListAPIView
+):
+
+    serializer_class = TaskSerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def get_queryset(
+        self
+    ):
+
+        user = self.request.user
+
+        queryset = Task.objects.filter(
+
+            due_date__lt=date.today()
+
+        ).exclude(
+
+            status="COMPLETED"
+
+        )
+
+        if user.role in [
+
+            "ADMIN",
+
+            "MANAGER",
+
+        ]:
+
+            return queryset.order_by(
+
+                "due_date"
+
+            )
+
+        return queryset.filter(
+
+            assigned_to=user
+
+        ).order_by(
+
+            "due_date"
+
         )

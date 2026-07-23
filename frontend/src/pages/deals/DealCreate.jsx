@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import MainLayout from "../../layouts/MainLayout";
+import PageActions from "../../components/common/PageActions";
 import api from "../../api/api";
 
 function DealCreate() {
@@ -15,8 +16,24 @@ function DealCreate() {
   const navigate =
     useNavigate();
 
+  const [loading, setLoading] =
+    useState(true);
+
   const [leads, setLeads] =
     useState([]);
+
+  const [users, setUsers] =
+    useState([]);
+
+  const currentUser = {
+
+    role:
+      localStorage.getItem("role"),
+
+    username:
+      localStorage.getItem("username"),
+
+  };
 
   const [formData, setFormData] =
     useState({
@@ -31,14 +48,33 @@ function DealCreate() {
 
       expected_close_date: "",
 
+      assigned_to: "",
+
       notes: "",
+
     });
 
   useEffect(() => {
 
     fetchLeads();
 
+    if (
+
+      currentUser.role === "ADMIN" ||
+
+      currentUser.role === "MANAGER"
+
+    ) {
+
+      fetchUsers();
+
+    }
+
   }, []);
+
+  // ==================================
+  // Leads
+  // ==================================
 
   const fetchLeads =
     async () => {
@@ -51,27 +87,86 @@ function DealCreate() {
           );
 
         setLeads(
-          Array.isArray(response.data)
-            ? response.data
-            : response.data.results || []
+
+          response.data.results ||
+
+          response.data ||
+
+          []
+
         );
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(error);
+
       }
+
+      finally {
+
+        setLoading(false);
+
+      }
+
     };
 
-  const handleChange = (e) => {
+  // ==================================
+  // Sales Executives
+  // ==================================
 
-    setFormData({
+  const fetchUsers =
+    async () => {
 
-      ...formData,
+      try {
 
-      [e.target.name]:
-      e.target.value,
-    });
-  };
+        const response =
+          await api.get(
+            "auth/assign-users/"
+          );
+
+        setUsers(
+
+          response.data.results ||
+
+          response.data ||
+
+          []
+
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+  // ==================================
+  // Handle Change
+  // ==================================
+
+  const handleChange =
+    (e) => {
+
+      setFormData({
+
+        ...formData,
+
+        [e.target.name]:
+          e.target.value,
+
+      });
+
+    };
+
+  // ==================================
+  // Submit
+  // ==================================
 
   const handleSubmit =
     async (e) => {
@@ -81,31 +176,93 @@ function DealCreate() {
       try {
 
         await api.post(
+
           "deals/",
+
           formData
+
+        );
+
+        alert(
+          "Deal created successfully."
         );
 
         navigate(
           "/deals"
         );
 
-      } catch (error) {
-
-        console.log(
-          error.response?.data
-        );
       }
+
+      catch (error) {
+
+        console.log(error);
+
+        alert(
+
+          error.response?.data?.detail ||
+
+          "Unable to create deal."
+
+        );
+
+      }
+
     };
+
+  if (loading) {
+
+    return (
+
+      <MainLayout>
+
+        <div
+          className="
+          bg-white
+          rounded-2xl
+          shadow-md
+          p-8
+          text-center
+          text-xl
+        "
+        >
+
+          Loading...
+
+        </div>
+
+      </MainLayout>
+
+    );
+
+  }
 
   return (
 
-    <MainLayout>
+  <MainLayout>
+
+    <PageActions
+
+      backPath="/deals"
+
+      backTitle="Deals"
+
+    />
+
+    <div
+      className="
+      bg-white
+      rounded-3xl
+      shadow-md
+      p-8
+    "
+    >
 
       <h1
         className="
         text-3xl
         font-bold
-        mb-6
+        text-red-700
+        mb-8
       "
       >
         Create Deal
@@ -114,153 +271,408 @@ function DealCreate() {
       <form
         onSubmit={handleSubmit}
         className="
-        bg-white
-        p-8
-        rounded-2xl
-        shadow-md
-        space-y-4
+        grid
+        md:grid-cols-2
+        gap-6
       "
       >
 
-        <select
-          name="lead"
-          value={formData.lead}
-          onChange={handleChange}
-          required
-          className="
-          w-full
-          border
-          p-3
-          rounded-xl
-        "
-        >
+        {/* Lead */}
 
-          <option value="">
-            Select Lead
-          </option>
+        <div>
 
-          {leads.map(
-            (lead) => (
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Lead
+          </label>
 
-              <option
-                key={lead.id}
-                value={lead.id}
+          <select
+
+            name="lead"
+
+            value={formData.lead}
+
+            onChange={handleChange}
+
+            required
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+          >
+
+            <option value="">
+              Select Lead
+            </option>
+
+            {
+
+              leads.map(
+                (lead)=>(
+
+                  <option
+
+                    key={lead.id}
+
+                    value={lead.id}
+
+                  >
+
+                    {lead.customer_name}
+
+                  </option>
+
+                )
+              )
+
+            }
+
+          </select>
+
+        </div>
+
+        {/* Deal Name */}
+
+        <div>
+
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Deal Name
+          </label>
+
+          <input
+
+            type="text"
+
+            name="deal_name"
+
+            value={formData.deal_name}
+
+            onChange={handleChange}
+
+            required
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+
+          />
+
+        </div>
+
+        {/* Deal Value */}
+
+        <div>
+
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Deal Value
+          </label>
+
+          <input
+
+            type="number"
+
+            name="deal_value"
+
+            value={formData.deal_value}
+
+            onChange={handleChange}
+
+            required
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+
+          />
+
+        </div>
+
+        {/* Expected Close Date */}
+
+        <div>
+
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Expected Close Date
+          </label>
+
+          <input
+
+            type="date"
+
+            name="expected_close_date"
+
+            value={formData.expected_close_date}
+
+            onChange={handleChange}
+
+            required
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+
+          />
+
+        </div>
+
+        {/* Stage */}
+
+        <div>
+
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Stage
+          </label>
+
+          <select
+
+            name="stage"
+
+            value={formData.stage}
+
+            onChange={handleChange}
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+          >
+
+            <option value="PROSPECTING">
+              PROSPECTING
+            </option>
+
+            <option value="PROPOSAL">
+              PROPOSAL
+            </option>
+
+            <option value="NEGOTIATION">
+              NEGOTIATION
+            </option>
+
+            <option value="WON">
+              WON
+            </option>
+
+            <option value="LOST">
+              LOST
+            </option>
+
+          </select>
+
+        </div>
+
+        {/* Assign To */}
+
+        {
+
+          (
+
+            currentUser.role === "ADMIN"
+
+            ||
+
+            currentUser.role === "MANAGER"
+
+          )
+
+          &&
+
+          (
+
+            <div>
+
+              <label
+                className="
+                block
+                font-semibold
+                mb-2
+              "
               >
-                {lead.customer_name}
-              </option>
-            )
-          )}
+                Assign Sales Executive
+              </label>
 
-        </select>
+              <select
 
-        <input
-          type="text"
-          name="deal_name"
-          placeholder="Deal Name"
-          value={formData.deal_name}
-          onChange={handleChange}
-          required
+                name="assigned_to"
+
+                value={formData.assigned_to}
+
+                onChange={handleChange}
+
+                className="
+                w-full
+                border
+                border-red-200
+                rounded-xl
+                p-3
+              "
+              >
+
+                <option value="">
+                  Select Sales Executive
+                </option>
+
+                {
+
+                  users.map(
+                    (user)=>(
+
+                      <option
+
+                        key={user.id}
+
+                        value={user.id}
+
+                      >
+
+                        {user.username}
+
+                      </option>
+
+                    )
+                  )
+
+                }
+
+              </select>
+
+            </div>
+
+          )
+
+        }
+
+        {/* Notes */}
+
+        <div
           className="
-          w-full
-          border
-          p-3
-          rounded-xl
+          md:col-span-2
         "
-        />
+        >
 
-        <input
-          type="number"
-          name="deal_value"
-          placeholder="Deal Value"
-          value={formData.deal_value}
-          onChange={handleChange}
-          required
-          className="
-          w-full
-          border
-          p-3
-          rounded-xl
-        "
-        />
+          <label
+            className="
+            block
+            font-semibold
+            mb-2
+          "
+          >
+            Notes
+          </label>
 
-        <input
-          type="date"
-          name="expected_close_date"
-          value={formData.expected_close_date}
-          onChange={handleChange}
-          required
-          className="
-          w-full
-          border
-          p-3
-          rounded-xl
-        "
-        />
+          <textarea
 
-        <select
-          name="stage"
-          value={formData.stage}
-          onChange={handleChange}
+            name="notes"
+
+            rows="5"
+
+            value={formData.notes}
+
+            onChange={handleChange}
+
+            className="
+            w-full
+            border
+            border-red-200
+            rounded-xl
+            p-3
+          "
+
+          />
+
+        </div>
+
+        {/* Button */}
+
+        <div
           className="
-          w-full
-          border
-          p-3
-          rounded-xl
+          md:col-span-2
         "
         >
 
-          <option value="PROSPECTING">
-            PROSPECTING
-          </option>
+          <button
 
-          <option value="PROPOSAL">
-            PROPOSAL
-          </option>
+            type="submit"
 
-          <option value="NEGOTIATION">
-            NEGOTIATION
-          </option>
+            className="
+            bg-red-600
+            hover:bg-red-700
 
-          <option value="WON">
-            WON
-          </option>
+            text-white
 
-          <option value="LOST">
-            LOST
-          </option>
+            px-8
+            py-3
 
-        </select>
+            rounded-xl
 
-        <textarea
-          name="notes"
-          value={formData.notes}
-          onChange={handleChange}
-          placeholder="Notes"
-          className="
-          w-full
-          border
-          p-3
-          rounded-xl
-        "
-        />
+            font-semibold
 
-        <button
-          className="
-          bg-red-600
-          hover:bg-red-700
-          text-white
-          px-6
-          py-3
-          rounded-xl
-        "
-        >
-          Save Deal
-        </button>
+            transition-all
+          "
+          >
+
+            Create Deal
+
+          </button>
+
+        </div>
 
       </form>
 
-    </MainLayout>
-  );
+    </div>
+
+  </MainLayout>
+
+);
+
 }
 
 export default DealCreate;

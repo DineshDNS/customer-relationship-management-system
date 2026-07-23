@@ -5,4 +5,16 @@ class TaskStatusSerializer(
     serializers.Serializer
 ):
 
-    status = serializers.CharField()
+    status = serializers.ChoiceField(
+
+        choices=[
+
+            "PENDING",
+
+            "IN_PROGRESS",
+
+            "COMPLETED",
+
+        ]
+
+    )

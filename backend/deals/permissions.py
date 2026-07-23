@@ -12,13 +12,28 @@ class IsDealOwnerOrAdminOrManager(
         obj
     ):
 
-        if request.user.role in [
-            "ADMIN",
-            "MANAGER",
-        ]:
+        # -------------------------
+        # Admin
+        # -------------------------
+
+        if request.user.role == "ADMIN":
+
             return True
 
+        # -------------------------
+        # Manager
+        # -------------------------
+
+        if request.user.role == "MANAGER":
+
+            return True
+
+        # -------------------------
+        # Sales Executive
+        # -------------------------
+
         return (
-            obj.created_by
-            == request.user
+
+            obj.assigned_to == request.user
+
         )

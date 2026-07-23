@@ -1,6 +1,4 @@
-from rest_framework.permissions import (
-    BasePermission
-)
+from rest_framework.permissions import BasePermission
 
 
 class IsTaskOwnerOrAdminOrManager(
@@ -8,19 +6,33 @@ class IsTaskOwnerOrAdminOrManager(
 ):
 
     def has_object_permission(
+
         self,
+
         request,
+
         view,
-        obj
+
+        obj,
+
     ):
 
         if request.user.role in [
+
             "ADMIN",
+
             "MANAGER",
+
         ]:
+
             return True
 
         return (
+
             obj.assigned_to
-            == request.user
+
+            ==
+
+            request.user
+
         )

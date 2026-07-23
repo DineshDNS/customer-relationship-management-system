@@ -18,14 +18,27 @@ function CustomerUpdate() {
 
   const navigate = useNavigate();
 
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
   const [formData, setFormData] =
     useState({
+
       name: "",
+
       email: "",
+
       phone: "",
+
       company: "",
+
       address: "",
-      lead_source: "",
+
+      lead_source: "Website",
+
     });
 
   useEffect(() => {
@@ -44,12 +57,22 @@ function CustomerUpdate() {
             `customers/${id}/`
           );
 
-        setFormData(response.data);
+        setFormData(
+          response.data
+        );
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(error);
+
+        setError(
+          "Unable to load customer."
+        );
+
       }
+
     };
 
   const handleChange =
@@ -61,7 +84,9 @@ function CustomerUpdate() {
 
         [e.target.name]:
           e.target.value,
+
       });
+
     };
 
   const handleSubmit =
@@ -69,27 +94,48 @@ function CustomerUpdate() {
 
       e.preventDefault();
 
+      setLoading(true);
+
+      setError("");
+
       try {
 
         await api.put(
+
           `customers/${id}/`,
+
           formData
+
         );
 
         alert(
-          "Customer Updated Successfully"
+          "Customer updated successfully."
         );
 
         navigate(
           `/customers/${id}`
         );
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.log(
           error.response?.data
         );
+
+        setError(
+          "Unable to update customer."
+        );
+
       }
+
+      finally {
+
+        setLoading(false);
+
+      }
+
     };
 
   return (
@@ -97,8 +143,11 @@ function CustomerUpdate() {
     <MainLayout>
 
       <BackButton
+
         path={`/customers/${id}`}
+
         title="Customer Details"
+
       />
 
       <h1
@@ -111,15 +160,40 @@ function CustomerUpdate() {
         Update Customer
       </h1>
 
+      {
+
+        error && (
+
+          <div
+            className="
+            bg-red-100
+            text-red-700
+            p-4
+            rounded-xl
+            mb-6
+          "
+          >
+
+            {error}
+
+          </div>
+
+        )
+
+      }
+
       <form
+
         onSubmit={handleSubmit}
+
         className="
         bg-white
-        p-8
         rounded-2xl
         shadow-md
-        space-y-4
+        p-8
+        space-y-5
       "
+
       >
 
         <input
@@ -127,11 +201,13 @@ function CustomerUpdate() {
           name="name"
           value={formData.name}
           onChange={handleChange}
+          required
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         />
 
@@ -140,11 +216,13 @@ function CustomerUpdate() {
           name="email"
           value={formData.email}
           onChange={handleChange}
+          required
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         />
 
@@ -153,11 +231,13 @@ function CustomerUpdate() {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
+          required
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         />
 
@@ -169,20 +249,23 @@ function CustomerUpdate() {
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         />
 
         <textarea
           name="address"
+          rows="4"
           value={formData.address}
           onChange={handleChange}
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         />
 
@@ -193,8 +276,9 @@ function CustomerUpdate() {
           className="
           w-full
           border
-          p-3
+          border-gray-300
           rounded-xl
+          p-3
         "
         >
 
@@ -220,23 +304,78 @@ function CustomerUpdate() {
 
         </select>
 
-        <button
+        <div
           className="
-          bg-red-600
-          hover:bg-red-700
-          text-white
-          px-6
-          py-3
-          rounded-xl
+          flex
+          gap-4
+          pt-2
         "
         >
-          Update Customer
-        </button>
+
+          <button
+
+            type="submit"
+
+            disabled={loading}
+
+            className="
+            bg-red-600
+            hover:bg-red-700
+            disabled:bg-red-300
+            text-white
+            px-6
+            py-3
+            rounded-xl
+            font-semibold
+          "
+          >
+
+            {
+
+              loading
+
+                ? "Updating..."
+
+                : "Update Customer"
+
+            }
+
+          </button>
+
+          <button
+
+            type="button"
+
+            onClick={() =>
+              navigate(
+                `/customers/${id}`
+              )
+            }
+
+            className="
+            bg-gray-200
+            hover:bg-gray-300
+            text-gray-800
+            px-6
+            py-3
+            rounded-xl
+            font-semibold
+          "
+
+          >
+
+            Cancel
+
+          </button>
+
+        </div>
 
       </form>
 
     </MainLayout>
+
   );
+
 }
 
 export default CustomerUpdate;
