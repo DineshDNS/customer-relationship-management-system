@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: backend
+  namespace: crm
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: backend
+
+  template:
+
+    metadata:
+      labels:
+        app: backend
+
+    spec:
+
+      containers:
+
+      - name: backend
+
+        image: dinesh3715/crm-backend:12
+
+        imagePullPolicy: Always
+
+        ports:
+
+        - containerPort: 8000
+
+        envFrom:
+
+        - configMapRef:
+            name: crm-config
+
+        - secretRef:
+            name: crm-secret
+
+        readinessProbe:
+
+          httpGet:
+            path: /admin/login/
+            port: 8000
+
+          initialDelaySeconds: 20
+          periodSeconds: 10
+
+        livenessProbe:
+
+          httpGet:
+            path: /admin/login/
+            port: 8000
+
+          initialDelaySeconds: 40
+          periodSeconds: 15
+
+        resources:
+
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
