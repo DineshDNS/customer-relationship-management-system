@@ -1,0 +1,161 @@
+pipeline {
+
+    agent any
+
+    environment {
+
+        BACKEND_IMAGE = "YOUR_DOCKERHUB_USERNAME/crm-backend"
+
+        FRONTEND_IMAGE = "YOUR_DOCKERHUB_USERNAME/crm-frontend"
+
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
+    }
+
+    stages {
+
+        stage('Checkout') {
+
+            steps {
+
+                checkout scm
+
+            }
+
+        }
+
+        stage('Backend Dependencies') {
+
+            steps {
+
+                dir('backend') {
+
+                    bat 'pip install -r requirements.txt'
+
+                }
+
+            }
+
+        }
+
+        stage('Frontend Dependencies') {
+
+            steps {
+
+                dir('frontend') {
+
+                    bat 'npm install'
+
+                }
+
+            }
+
+        }
+
+        stage('Backend Tests') {
+
+            steps {
+
+                dir('backend') {
+
+                    bat 'python manage.py test'
+
+                }
+
+            }
+
+        }
+
+        stage('Frontend Build') {
+
+            steps {
+
+                dir('frontend') {
+
+                    bat 'npm run build'
+
+                }
+
+            }
+
+        }
+
+        stage('Build Backend Docker Image') {
+
+            steps {
+
+                bat '''
+                docker build ^
+                -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
+                -f docker/backend/Dockerfile .
+                '''
+
+            }
+
+        }
+
+        stage('Build Frontend Docker Image') {
+
+            steps {
+
+                bat '''
+                docker build ^
+                -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
+                -f docker/frontend/Dockerfile .
+                '''
+
+            }
+
+        }
+
+        stage('Push Images') {
+
+            steps {
+
+                withCredentials([
+
+                    usernamePassword(
+
+                        credentialsId: 'dockerhub',
+
+                        usernameVariable: 'USERNAME',
+
+                        passwordVariable: 'PASSWORD'
+
+                    )
+
+                ]) {
+
+                    bat '''
+                    echo %PASSWORD% | docker login -u %USERNAME% --password-stdin
+
+                    docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+
+                    docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+                    '''
+
+                }
+
+            }
+
+        }
+
+    }
+
+    post {
+
+        success {
+
+            echo 'Pipeline Completed Successfully'
+
+        }
+
+        failure {
+
+            echo 'Pipeline Failed'
+
+        }
+
+    }
+
+}
