@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Credential Debug') {
+        stage('Docker Login Test') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -12,8 +12,8 @@ pipeline {
                     )
                 ]) {
                     bat '''
-                    echo Username=%DOCKER_USER%
-                    powershell -Command "Write-Host ('Password length: ' + $env:DOCKER_PASS.Length)"
+                    docker logout
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
                     '''
                 }
             }
