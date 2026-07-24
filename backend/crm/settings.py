@@ -21,7 +21,15 @@ SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1"
+).split(",")
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost,http://127.0.0.1"
+).split(",")
 
 # --------------------------------------------------
 # Applications
@@ -98,13 +106,13 @@ WSGI_APPLICATION = 'crm.wsgi.application'
 # --------------------------------------------------
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST", default="localhost"),
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 
@@ -159,7 +167,46 @@ AUTH_USER_MODEL = "accounts.User"
 # CORS
 # --------------------------------------------------
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = config(
+    "CORS_ALLOW_ALL_ORIGINS",
+    cast=bool,
+    default=True
+)
+
+SECURE_PROXY_SSL_HEADER = (
+    "HTTP_X_FORWARDED_PROTO",
+    "https",
+)
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+LOGGING = {
+
+    "version": 1,
+
+    "disable_existing_loggers": False,
+
+    "handlers": {
+
+        "console": {
+
+            "class": "logging.StreamHandler",
+
+        },
+
+    },
+
+    "root": {
+
+        "handlers": ["console"],
+
+        "level": "INFO",
+
+    },
+
+}
 
 # --------------------------------------------------
 # Django REST Framework

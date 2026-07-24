@@ -1,0 +1,125 @@
+services:
+
+  postgres:
+
+    image: postgres:16
+
+    container_name: crm_postgres
+
+    restart: always
+
+    environment:
+
+      POSTGRES_DB: crm_db
+
+      POSTGRES_USER: postgres
+
+      POSTGRES_PASSWORD: 667254
+
+    ports:
+
+      - "5432:5432"
+
+    volumes:
+
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+
+      test: ["CMD-SHELL", "pg_isready -U postgres -d crm_db"]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+  backend:
+
+    build:
+
+      context: .
+
+      dockerfile: docker/backend/Dockerfile
+
+    container_name: crm_backend
+
+    restart: always
+
+    env_file:
+
+      - backend/.env.docker
+
+    depends_on:
+
+      postgres:
+
+        condition: service_healthy
+
+    ports:
+
+      - "8000:8000"
+
+    volumes:
+
+      - ./backend:/app
+
+      - static_volume:/app/staticfiles
+
+      - media_volume:/app/media
+
+  frontend:
+
+    build:
+
+      context: .
+
+      dockerfile: docker/frontend/Dockerfile
+
+    container_name: crm_frontend
+
+    restart: always
+
+    depends_on:
+
+      - backend
+
+    ports:
+
+      - "3000:80"
+
+  nginx:
+
+    build:
+
+      context: .
+
+      dockerfile: docker/nginx/Dockerfile
+
+    container_name: crm_nginx
+
+    restart: always
+
+    depends_on:
+
+      - backend
+
+      - frontend
+
+    ports:
+
+      - "80:80"
+
+    volumes:
+
+      - static_volume:/app/staticfiles
+
+      - media_volume:/app/media
+
+volumes:
+
+  postgres_data:
+
+  static_volume:
+
+  media_volume:
