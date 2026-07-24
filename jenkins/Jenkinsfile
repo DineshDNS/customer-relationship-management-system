@@ -1,22 +1,188 @@
 pipeline {
+
     agent any
 
-    stages {
-        stage('Docker Login Test') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    bat '''
-                    docker logout
-                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                    '''
-                }
-            }
-        }
+    environment {
+
+        DOCKER_USERNAME = "dinesh3715"
+
+        BACKEND_IMAGE = "${DOCKER_USERNAME}/crm-backend"
+
+        FRONTEND_IMAGE = "${DOCKER_USERNAME}/crm-frontend"
+
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
     }
+
+    stages {
+
+        stage('Checkout Source') {
+
+            steps {
+
+                checkout scm
+
+            }
+
+        }
+
+        stage('Install Backend Dependencies') {
+
+            steps {
+
+                dir('backend') {
+
+                    bat 'pip install -r requirements.txt'
+
+                }
+
+            }
+
+        }
+
+        stage('Install Frontend Dependencies') {
+
+            steps {
+
+                dir('frontend') {
+
+                    bat 'npm install'
+
+                }
+
+            }
+
+        }
+
+        stage('Run Django Tests') {
+
+            steps {
+
+                dir('backend') {
+
+                    bat 'python manage.py test'
+
+                }
+
+            }
+
+        }
+
+        stage('Build React Application') {
+
+            steps {
+
+                dir('frontend') {
+
+                    bat 'npm run build'
+
+                }
+
+            }
+
+        }
+
+        stage('Build Backend Docker Image') {
+
+            steps {
+
+                bat """
+                docker build ^
+                -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
+                -f docker/backend/Dockerfile .
+                """
+
+            }
+
+        }
+
+        stage('Build Frontend Docker Image') {
+
+            steps {
+
+                bat """
+                docker build ^
+                -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
+                -f docker/frontend/Dockerfile .
+                """
+
+            }
+
+        }
+
+        stage('Docker Hub Login') {
+
+            steps {
+
+                withCredentials([
+
+                    usernamePassword(
+
+                        credentialsId: 'dockerhub-creds',
+
+                        usernameVariable: 'DOCKER_USER',
+
+                        passwordVariable: 'DOCKER_PASS'
+
+                    )
+
+                ]) {
+
+                    bat """
+                    docker logout
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+                    """
+
+                }
+
+            }
+
+        }
+
+        stage('Push Backend Image') {
+
+            steps {
+
+                bat """
+                docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+                """
+
+            }
+
+        }
+
+        stage('Push Frontend Image') {
+
+            steps {
+
+                bat """
+                docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+                """
+
+            }
+
+        }
+
+    }
+
+    post {
+
+        success {
+
+            echo "========================================"
+            echo " CRM CI/CD Pipeline Completed Successfully "
+            echo "========================================"
+
+        }
+
+        failure {
+
+            echo "========================================"
+            echo " CRM CI/CD Pipeline Failed "
+            echo "========================================"
+
+        }
+
+    }
+
 }
