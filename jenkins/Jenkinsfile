@@ -4,15 +4,25 @@ pipeline {
 
     environment {
 
-        BACKEND_IMAGE = "YOUR_DOCKERHUB_USERNAME/crm-backend"
+        // ==========================
+        // Docker Hub
+        // ==========================
 
-        FRONTEND_IMAGE = "YOUR_DOCKERHUB_USERNAME/crm-frontend"
+        DOCKER_USERNAME = "yourdockerhubusername"
+
+        BACKEND_IMAGE = "${DOCKER_USERNAME}/crm-backend"
+
+        FRONTEND_IMAGE = "${DOCKER_USERNAME}/crm-frontend"
 
         IMAGE_TAG = "${BUILD_NUMBER}"
 
     }
 
     stages {
+
+        // ==========================
+        // Checkout Source
+        // ==========================
 
         stage('Checkout') {
 
@@ -23,6 +33,10 @@ pipeline {
             }
 
         }
+
+        // ==========================
+        // Backend Dependencies
+        // ==========================
 
         stage('Backend Dependencies') {
 
@@ -38,6 +52,10 @@ pipeline {
 
         }
 
+        // ==========================
+        // Frontend Dependencies
+        // ==========================
+
         stage('Frontend Dependencies') {
 
             steps {
@@ -51,6 +69,10 @@ pipeline {
             }
 
         }
+
+        // ==========================
+        // Django Tests
+        // ==========================
 
         stage('Backend Tests') {
 
@@ -66,6 +88,10 @@ pipeline {
 
         }
 
+        // ==========================
+        // React Build
+        // ==========================
+
         stage('Frontend Build') {
 
             steps {
@@ -80,35 +106,47 @@ pipeline {
 
         }
 
+        // ==========================
+        // Backend Docker Image
+        // ==========================
+
         stage('Build Backend Docker Image') {
 
             steps {
 
-                bat '''
+                bat """
                 docker build ^
                 -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
                 -f docker/backend/Dockerfile .
-                '''
+                """
 
             }
 
         }
+
+        // ==========================
+        // Frontend Docker Image
+        // ==========================
 
         stage('Build Frontend Docker Image') {
 
             steps {
 
-                bat '''
+                bat """
                 docker build ^
                 -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
                 -f docker/frontend/Dockerfile .
-                '''
+                """
 
             }
 
         }
 
-        stage('Push Images') {
+        // ==========================
+        // Docker Hub Login
+        // ==========================
+
+        stage('Docker Login') {
 
             steps {
 
@@ -126,15 +164,43 @@ pipeline {
 
                 ]) {
 
-                    bat '''
+                    bat """
                     echo %PASSWORD% | docker login -u %USERNAME% --password-stdin
-
-                    docker push %BACKEND_IMAGE%:%IMAGE_TAG%
-
-                    docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
-                    '''
+                    """
 
                 }
+
+            }
+
+        }
+
+        // ==========================
+        // Push Backend Image
+        // ==========================
+
+        stage('Push Backend Image') {
+
+            steps {
+
+                bat """
+                docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+                """
+
+            }
+
+        }
+
+        // ==========================
+        // Push Frontend Image
+        // ==========================
+
+        stage('Push Frontend Image') {
+
+            steps {
+
+                bat """
+                docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+                """
 
             }
 
@@ -146,13 +212,21 @@ pipeline {
 
         success {
 
-            echo 'Pipeline Completed Successfully'
+            echo "======================================"
+
+            echo "CRM CI/CD Pipeline Completed"
+
+            echo "======================================"
 
         }
 
         failure {
 
-            echo 'Pipeline Failed'
+            echo "======================================"
+
+            echo "CRM CI/CD Pipeline Failed"
+
+            echo "======================================"
 
         }
 
