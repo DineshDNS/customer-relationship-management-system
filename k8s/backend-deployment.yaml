@@ -25,7 +25,7 @@ spec:
 
       - name: backend
 
-        image: dinesh3715/crm-backend:12
+        image: dinesh3715/crm-backend:latest
 
         imagePullPolicy: Always
 
