@@ -7,6 +7,7 @@ metadata:
   namespace: crm
 
 spec:
+
   replicas: 1
 
   selector:
@@ -14,7 +15,9 @@ spec:
       app: postgres
 
   template:
+
     metadata:
+
       labels:
         app: postgres
 
@@ -29,6 +32,7 @@ spec:
         imagePullPolicy: IfNotPresent
 
         ports:
+
         - containerPort: 5432
 
         env:
@@ -41,8 +45,8 @@ spec:
 
         - name: POSTGRES_USER
           valueFrom:
-            secretKeyRef:
-              name: crm-secret
+            configMapKeyRef:
+              name: crm-config
               key: DB_USER
 
         - name: POSTGRES_PASSWORD
@@ -56,8 +60,56 @@ spec:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
 
+        readinessProbe:
+
+          exec:
+
+            command:
+
+            - pg_isready
+
+            - -U
+
+            - postgres
+
+          initialDelaySeconds: 10
+
+          periodSeconds: 10
+
+        livenessProbe:
+
+          exec:
+
+            command:
+
+            - pg_isready
+
+            - -U
+
+            - postgres
+
+          initialDelaySeconds: 30
+
+          periodSeconds: 20
+
+        resources:
+
+          requests:
+
+            cpu: "250m"
+
+            memory: "256Mi"
+
+          limits:
+
+            cpu: "500m"
+
+            memory: "512Mi"
+
       volumes:
 
       - name: postgres-storage
 
-        emptyDir: {}
+        persistentVolumeClaim:
+
+          claimName: postgres-pvc

@@ -1,26 +1,31 @@
 apiVersion: apps/v1
-
 kind: Deployment
 
 metadata:
   name: backend
   namespace: crm
+  labels:
+    app: backend
 
 spec:
   replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
 
   selector:
     matchLabels:
       app: backend
 
   template:
-
     metadata:
       labels:
         app: backend
 
     spec:
-
       containers:
 
       - name: backend
@@ -30,41 +35,105 @@ spec:
         imagePullPolicy: Always
 
         ports:
-
         - containerPort: 8000
 
-        envFrom:
+        env:
 
-        - configMapRef:
-            name: crm-config
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: SECRET_KEY
 
-        - secretRef:
-            name: crm-secret
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: DEBUG
+
+        - name: ALLOWED_HOSTS
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: ALLOWED_HOSTS
+
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: DB_NAME
+
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: DB_USER
+
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crm-secret
+              key: DB_PASSWORD
+
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: DB_HOST
+
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: DB_PORT
+
+        - name: CORS_ALLOW_ALL_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: CORS_ALLOW_ALL_ORIGINS
+
+        - name: CSRF_TRUSTED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: CSRF_TRUSTED_ORIGINS
+
+        - name: CSRF_COOKIE_SECURE
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: CSRF_COOKIE_SECURE
+
+        - name: SESSION_COOKIE_SECURE
+          valueFrom:
+            configMapKeyRef:
+              name: crm-config
+              key: SESSION_COOKIE_SECURE
 
         readinessProbe:
-
           httpGet:
-            path: /admin/login/
+            path: /health/
             port: 8000
-
           initialDelaySeconds: 20
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 
         livenessProbe:
-
           httpGet:
-            path: /admin/login/
+            path: /health/
             port: 8000
-
           initialDelaySeconds: 40
-          periodSeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
 
         resources:
-
           requests:
-            memory: "256Mi"
             cpu: "250m"
+            memory: "256Mi"
 
           limits:
-            memory: "512Mi"
             cpu: "500m"
+            memory: "512Mi"

@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-
 kind: Deployment
 
 metadata:
   name: frontend
   namespace: crm
+  labels:
+    app: frontend
 
 spec:
   replicas: 1
@@ -25,7 +26,7 @@ spec:
 
       - name: frontend
 
-        image: dinesh3715/crm-frontend:12
+        image: dinesh3715/crm-frontend:latest
 
         imagePullPolicy: Always
 
@@ -33,12 +34,30 @@ spec:
 
         - containerPort: 80
 
+        readinessProbe:
+
+          httpGet:
+            path: /
+            port: 80
+
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        livenessProbe:
+
+          httpGet:
+            path: /
+            port: 80
+
+          initialDelaySeconds: 20
+          periodSeconds: 20
+
         resources:
 
           requests:
-            memory: "128Mi"
             cpu: "100m"
+            memory: "128Mi"
 
           limits:
+            cpu: "300m"
             memory: "256Mi"
-            cpu: "250m"
