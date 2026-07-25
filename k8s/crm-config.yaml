@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: crm-config
+  namespace: crm
+
+data:
+
+  DEBUG: "False"
+
+  ALLOWED_HOSTS: "localhost,127.0.0.1,backend,backend-service,frontend,frontend-service"
+
+  CORS_ALLOW_ALL_ORIGINS: "True"
+
+  CSRF_TRUSTED_ORIGINS: "http://localhost,http://127.0.0.1"
+
+  CSRF_COOKIE_SECURE: "False"
+
+  SESSION_COOKIE_SECURE: "False"
+
+  DB_NAME: "crm_db"
+
+  DB_USER: "postgres"
+
+  DB_HOST: "postgres"
+
+  DB_PORT: "5432"

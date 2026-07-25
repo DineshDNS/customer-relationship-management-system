@@ -2,6 +2,20 @@ pipeline {
 
     agent any
 
+    options {
+
+        timestamps()
+
+        disableConcurrentBuilds()
+
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: '10'
+            )
+        )
+
+    }
+
     environment {
 
         DOCKER_USERNAME = "dinesh3715"
@@ -12,107 +26,92 @@ pipeline {
 
         IMAGE_TAG = "${BUILD_NUMBER}"
 
+        KUBE_NAMESPACE = "crm"
+
     }
 
     stages {
-
-        stage('Checkout Source') {
+                stage('Checkout Source') {
 
             steps {
+
+                echo "=========================================="
+
+                echo "Checking out source code..."
+
+                echo "=========================================="
 
                 checkout scm
 
             }
 
         }
+                stage('Build & Test') {
 
-        stage('Build & Test') {
+            parallel failFast: true,
 
-            parallel {
+            Backend: {
 
-                stage('Backend') {
+                dir('Backend') {
 
-                    steps {
+                    bat 'python -m pip install --upgrade pip'
 
-                        dir('Backend') {
+                    bat 'pip install -r requirements.txt'
 
-                            bat 'pip install -r requirements.txt'
-
-                            bat 'python manage.py test'
-
-                        }
-
-                    }
+                    bat 'python manage.py test'
 
                 }
 
-                stage('Frontend') {
+            },
 
-                    steps {
+            Frontend: {
 
-                        dir('Frontend') {
+                dir('Frontend') {
 
-                            bat 'npm install'
+                    bat 'npm install'
 
-                            bat 'npm run build'
-
-                        }
-
-                    }
+                    bat 'npm run build'
 
                 }
 
             }
 
         }
+                stage('Build Docker Images') {
 
-        stage('Build Docker Images') {
+            parallel failFast: true,
 
-            parallel {
+            Backend: {
 
-                stage('Backend Image') {
+                dir('Backend') {
 
-                    steps {
-
-                        dir('Backend') {
-
-                            bat """
-                            docker build ^
-                            -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
-                            -t %BACKEND_IMAGE%:latest ^
-                            .
-                            """
-
-                        }
-
-                    }
+                    bat """
+                    docker build ^
+                    -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
+                    -t %BACKEND_IMAGE%:latest ^
+                    .
+                    """
 
                 }
 
-                stage('Frontend Image') {
+            },
 
-                    steps {
+            Frontend: {
 
-                        dir('Frontend') {
+                dir('Frontend') {
 
-                            bat """
-                            docker build ^
-                            -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
-                            -t %FRONTEND_IMAGE%:latest ^
-                            .
-                            """
-
-                        }
-
-                    }
+                    bat """
+                    docker build ^
+                    -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
+                    -t %FRONTEND_IMAGE%:latest ^
+                    .
+                    """
 
                 }
 
             }
 
-        }
-
-        stage('DockerHub Login') {
+        }        stage('DockerHub Login') {
 
             steps {
 
@@ -131,8 +130,11 @@ pipeline {
                 ]) {
 
                     bat """
+
                     docker logout
+
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+
                     """
 
                 }
@@ -140,96 +142,150 @@ pipeline {
             }
 
         }
+                stage('DockerHub Login') {
 
-        stage('Push Docker Images') {
+            steps {
 
-            parallel {
+                withCredentials([
 
-                stage('Backend Push') {
+                    usernamePassword(
 
-                    steps {
+                        credentialsId: 'dockerhub-creds',
 
-                        retry(3) {
+                        usernameVariable: 'DOCKER_USER',
 
-                            bat "docker push %BACKEND_IMAGE%:%IMAGE_TAG%"
+                        passwordVariable: 'DOCKER_PASS'
 
-                        }
+                    )
 
-                        retry(3) {
+                ]) {
 
-                            bat "docker push %BACKEND_IMAGE%:latest"
+                    bat """
 
-                        }
+                    docker logout
 
-                    }
+                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
 
-                }
-
-                stage('Frontend Push') {
-
-                    steps {
-
-                        retry(3) {
-
-                            bat "docker push %FRONTEND_IMAGE%:%IMAGE_TAG%"
-
-                        }
-
-                        retry(3) {
-
-                            bat "docker push %FRONTEND_IMAGE%:latest"
-
-                        }
-
-                    }
+                    """
 
                 }
 
             }
 
         }
+                stage('Push Docker Images') {
 
-        stage('Deploy to Kubernetes') {
+            parallel failFast: true,
+
+            Backend: {
+
+                retry(3) {
+
+                    bat """
+                    docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+                    docker push %BACKEND_IMAGE%:latest
+                    """
+
+                }
+
+            },
+
+            Frontend: {
+
+                retry(3) {
+
+                    bat """
+                    docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+                    docker push %FRONTEND_IMAGE%:latest
+                    """
+
+                }
+
+            }
+
+        }
+                stage('Verify Docker Images') {
 
             steps {
+
+                echo "=========================================="
+
+                echo "Verifying Docker Images..."
+
+                echo "=========================================="
+
+                bat "docker images | findstr crm-backend"
+
+                bat "docker images | findstr crm-frontend"
+
+            }
+
+        }
+                stage('Deploy to Kubernetes') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Deploying to Kubernetes..."
+
+                echo "=========================================="
 
                 bat "kubectl apply -f k8s/"
 
                 bat """
                 kubectl set image deployment/backend ^
                 backend=%BACKEND_IMAGE%:%IMAGE_TAG% ^
-                -n crm
+                -n %KUBE_NAMESPACE%
                 """
 
                 bat """
                 kubectl set image deployment/frontend ^
                 frontend=%FRONTEND_IMAGE%:%IMAGE_TAG% ^
-                -n crm
+                -n %KUBE_NAMESPACE%
                 """
 
             }
 
         }
-
-        stage('Wait for Rollout') {
+                stage('Wait for Rollout') {
 
             steps {
 
+                echo "=========================================="
+
+                echo "Waiting for Kubernetes Rollout..."
+
+                echo "=========================================="
+
                 bat """
-                kubectl rollout status deployment/backend -n crm --timeout=300s
+                kubectl rollout status deployment/backend -n %KUBE_NAMESPACE% --timeout=300s
                 """
 
                 bat """
-                kubectl rollout status deployment/frontend -n crm --timeout=300s
+                kubectl rollout status deployment/frontend -n %KUBE_NAMESPACE% --timeout=300s
+                """
+
+                bat """
+                kubectl wait --for=condition=Available deployment/backend -n %KUBE_NAMESPACE% --timeout=300s
+                """
+
+                bat """
+                kubectl wait --for=condition=Available deployment/frontend -n %KUBE_NAMESPACE% --timeout=300s
                 """
 
             }
 
         }
-
-        stage('Database Migration') {
+                stage('Database Migration') {
 
             steps {
+
+                echo "=========================================="
+
+                echo "Running Django Migrations..."
+
+                echo "=========================================="
 
                 powershell '''
 
@@ -244,53 +300,47 @@ pipeline {
             }
 
         }
-
-        stage('Verify Deployment') {
+                stage('Verify Deployment') {
 
             steps {
 
-                bat "kubectl get deployment -n crm"
+                echo "=========================================="
 
-                bat "kubectl get pods -n crm"
+                echo "Verifying Deployment..."
 
-                bat "kubectl get svc -n crm"
+                echo "=========================================="
+
+                bat "kubectl get deployment -n %KUBE_NAMESPACE%"
+
+                bat "kubectl get pods -n %KUBE_NAMESPACE%"
+
+                bat "kubectl get svc -n %KUBE_NAMESPACE%"
+
+                bat "kubectl get rs -n %KUBE_NAMESPACE%"
+
+            }
+
+        }
+                stage('Deployment Information') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Running Images"
+
+                echo "=========================================="
+
+                bat """
+                kubectl get deployment backend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                """
+
+                bat """
+                kubectl get deployment frontend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                """
 
             }
 
         }
 
     }
-
-    post {
-
-        success {
-
-            echo "=============================================="
-
-            echo " CRM APPLICATION DEPLOYED SUCCESSFULLY "
-
-            echo "=============================================="
-
-        }
-
-        failure {
-
-            echo "=============================================="
-
-            echo " CRM APPLICATION DEPLOYMENT FAILED "
-
-            echo "=============================================="
-
-        }
-
-        always {
-
-            bat "docker image prune -f"
-
-            cleanWs()
-
-        }
-
-    }
-
-}

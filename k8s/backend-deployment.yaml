@@ -115,6 +115,9 @@ spec:
           httpGet:
             path: /health/
             port: 8000
+            httpHeaders:
+              - name: Host
+                value: backend
           initialDelaySeconds: 20
           periodSeconds: 10
           timeoutSeconds: 5
@@ -124,6 +127,9 @@ spec:
           httpGet:
             path: /health/
             port: 8000
+            httpHeaders:
+              - name: Host
+                value: backend
           initialDelaySeconds: 40
           periodSeconds: 20
           timeoutSeconds: 5
