@@ -31,14 +31,13 @@ pipeline {
     }
 
     stages {
-                stage('Checkout Source') {
+
+        stage('Checkout Source') {
 
             steps {
 
                 echo "=========================================="
-
-                echo "Checking out source code..."
-
+                echo "Checking out CRM Source Code..."
                 echo "=========================================="
 
                 checkout scm
@@ -46,72 +45,100 @@ pipeline {
             }
 
         }
-                stage('Build & Test') {
 
-            parallel failFast: true,
+        stage('Build & Test') {
 
-            Backend: {
+            failFast true
 
-                dir('Backend') {
+            parallel {
 
-                    bat 'python -m pip install --upgrade pip'
+                stage('Backend') {
 
-                    bat 'pip install -r requirements.txt'
+                    steps {
 
-                    bat 'python manage.py test'
+                        dir('Backend') {
+
+                            bat 'python -m pip install --upgrade pip'
+
+                            bat 'pip install -r requirements.txt'
+
+                            bat 'python manage.py test'
+
+                        }
+
+                    }
 
                 }
 
-            },
+                stage('Frontend') {
 
-            Frontend: {
+                    steps {
 
-                dir('Frontend') {
+                        dir('Frontend') {
 
-                    bat 'npm install'
+                            bat 'npm install'
 
-                    bat 'npm run build'
+                            bat 'npm run build'
+
+                        }
+
+                    }
 
                 }
 
             }
 
         }
-                stage('Build Docker Images') {
 
-            parallel failFast: true,
+        stage('Build Docker Images') {
 
-            Backend: {
+            failFast true
 
-                dir('Backend') {
+            parallel {
 
-                    bat """
-                    docker build ^
-                    -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
-                    -t %BACKEND_IMAGE%:latest ^
-                    .
-                    """
+                stage('Backend Image') {
+
+                    steps {
+
+                        dir('Backend') {
+
+                            bat """
+                            docker build ^
+                            -t %BACKEND_IMAGE%:%IMAGE_TAG% ^
+                            -t %BACKEND_IMAGE%:latest ^
+                            .
+                            """
+
+                        }
+
+                    }
 
                 }
 
-            },
+                stage('Frontend Image') {
 
-            Frontend: {
+                    steps {
 
-                dir('Frontend') {
+                        dir('Frontend') {
 
-                    bat """
-                    docker build ^
-                    -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
-                    -t %FRONTEND_IMAGE%:latest ^
-                    .
-                    """
+                            bat """
+                            docker build ^
+                            -t %FRONTEND_IMAGE%:%IMAGE_TAG% ^
+                            -t %FRONTEND_IMAGE%:latest ^
+                            .
+                            """
+
+                        }
+
+                    }
 
                 }
 
             }
 
-        }        stage('DockerHub Login') {
+        }
+
+        stage('DockerHub Login') {
 
             steps {
 
@@ -130,42 +157,8 @@ pipeline {
                 ]) {
 
                     bat """
-
                     docker logout
-
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-
-                    """
-
-                }
-
-            }
-
-        }
-                stage('DockerHub Login') {
-
-            steps {
-
-                withCredentials([
-
-                    usernamePassword(
-
-                        credentialsId: 'dockerhub-creds',
-
-                        usernameVariable: 'DOCKER_USER',
-
-                        passwordVariable: 'DOCKER_PASS'
-
-                    )
-
-                ]) {
-
-                    bat """
-
-                    docker logout
-
-                    docker login -u %DOCKER_USER% -p %DOCKER_PASS%
-
                     """
 
                 }
@@ -175,43 +168,54 @@ pipeline {
         }
                 stage('Push Docker Images') {
 
-            parallel failFast: true,
+            failFast true
 
-            Backend: {
+            parallel {
 
-                retry(3) {
+                stage('Backend Push') {
 
-                    bat """
-                    docker push %BACKEND_IMAGE%:%IMAGE_TAG%
-                    docker push %BACKEND_IMAGE%:latest
-                    """
+                    steps {
+
+                        retry(3) {
+
+                            bat """
+                            docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+                            docker push %BACKEND_IMAGE%:latest
+                            """
+
+                        }
+
+                    }
 
                 }
 
-            },
+                stage('Frontend Push') {
 
-            Frontend: {
+                    steps {
 
-                retry(3) {
+                        retry(3) {
 
-                    bat """
-                    docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
-                    docker push %FRONTEND_IMAGE%:latest
-                    """
+                            bat """
+                            docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+                            docker push %FRONTEND_IMAGE%:latest
+                            """
+
+                        }
+
+                    }
 
                 }
 
             }
 
         }
-                stage('Verify Docker Images') {
+
+        stage('Verify Docker Images') {
 
             steps {
 
                 echo "=========================================="
-
                 echo "Verifying Docker Images..."
-
                 echo "=========================================="
 
                 bat "docker images | findstr crm-backend"
@@ -221,14 +225,13 @@ pipeline {
             }
 
         }
-                stage('Deploy to Kubernetes') {
+
+        stage('Deploy to Kubernetes') {
 
             steps {
 
                 echo "=========================================="
-
-                echo "Deploying to Kubernetes..."
-
+                echo "Deploying CRM to Kubernetes..."
                 echo "=========================================="
 
                 bat "kubectl apply -f k8s/"
@@ -248,14 +251,13 @@ pipeline {
             }
 
         }
-                stage('Wait for Rollout') {
+
+        stage('Wait for Rollout') {
 
             steps {
 
                 echo "=========================================="
-
                 echo "Waiting for Kubernetes Rollout..."
-
                 echo "=========================================="
 
                 bat """
@@ -277,14 +279,13 @@ pipeline {
             }
 
         }
-                stage('Database Migration') {
+
+        stage('Database Migration') {
 
             steps {
 
                 echo "=========================================="
-
-                echo "Running Django Migrations..."
-
+                echo "Running Django Database Migration..."
                 echo "=========================================="
 
                 powershell '''
@@ -300,14 +301,13 @@ pipeline {
             }
 
         }
-                stage('Verify Deployment') {
+
+        stage('Verify Deployment') {
 
             steps {
 
                 echo "=========================================="
-
-                echo "Verifying Deployment..."
-
+                echo "Verifying Kubernetes Resources..."
                 echo "=========================================="
 
                 bat "kubectl get deployment -n %KUBE_NAMESPACE%"
@@ -321,26 +321,71 @@ pipeline {
             }
 
         }
-                stage('Deployment Information') {
+
+        stage('Deployment Information') {
 
             steps {
 
                 echo "=========================================="
-
-                echo "Running Images"
-
+                echo "Current Running Images"
                 echo "=========================================="
 
                 bat """
                 kubectl get deployment backend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
 
+                echo ""
+
                 bat """
                 kubectl get deployment frontend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
+
+                echo ""
 
             }
 
         }
 
     }
+
+    post {
+
+        success {
+
+            echo ""
+
+            echo "=================================================="
+
+            echo " CRM APPLICATION DEPLOYED SUCCESSFULLY "
+
+            echo "=================================================="
+
+        }
+
+        failure {
+
+            echo ""
+
+            echo "=================================================="
+
+            echo " CRM APPLICATION DEPLOYMENT FAILED "
+
+            echo "=================================================="
+
+        }
+
+        always {
+
+            echo ""
+
+            echo "Cleaning Jenkins Workspace..."
+
+            bat "docker image prune -af"
+
+            cleanWs()
+
+        }
+
+    }
+
+}
