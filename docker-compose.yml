@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   postgres:
@@ -6,7 +8,7 @@ services:
 
     container_name: crm_postgres
 
-    restart: always
+    restart: unless-stopped
 
     environment:
 
@@ -26,7 +28,7 @@ services:
 
     healthcheck:
 
-      test: ["CMD-SHELL", "pg_isready -U postgres -d crm_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
 
       interval: 10s
 
@@ -38,17 +40,21 @@ services:
 
     build:
 
-      context: .
-
-      dockerfile: docker/backend/Dockerfile
+      context: ./Backend
 
     container_name: crm_backend
 
-    restart: always
+    restart: unless-stopped
 
     env_file:
 
-      - backend/.env.docker
+      - ./Backend/.env.docker
+
+    command: gunicorn crm.wsgi:application --bind 0.0.0.0:8000
+
+    ports:
+
+      - "8000:8000"
 
     depends_on:
 
@@ -56,29 +62,19 @@ services:
 
         condition: service_healthy
 
-    ports:
-
-      - "8000:8000"
-
     volumes:
 
-      - ./backend:/app
-
-      - static_volume:/app/staticfiles
-
-      - media_volume:/app/media
+      - ./Backend:/app
 
   frontend:
 
     build:
 
-      context: .
-
-      dockerfile: docker/frontend/Dockerfile
+      context: ./Frontend
 
     container_name: crm_frontend
 
-    restart: always
+    restart: unless-stopped
 
     depends_on:
 
@@ -86,40 +82,8 @@ services:
 
     ports:
 
-      - "3000:80"
-
-  nginx:
-
-    build:
-
-      context: .
-
-      dockerfile: docker/nginx/Dockerfile
-
-    container_name: crm_nginx
-
-    restart: always
-
-    depends_on:
-
-      - backend
-
-      - frontend
-
-    ports:
-
-      - "80:80"
-
-    volumes:
-
-      - static_volume:/app/staticfiles
-
-      - media_volume:/app/media
+      - "5173:80"
 
 volumes:
 
   postgres_data:
-
-  static_volume:
-
-  media_volume:
