@@ -26,8 +26,6 @@ pipeline {
 
         IMAGE_TAG = "${BUILD_NUMBER}"
 
-        KUBE_NAMESPACE = "crm"
-
     }
 
     stages {
@@ -37,7 +35,9 @@ pipeline {
             steps {
 
                 echo "=========================================="
+
                 echo "Checking out CRM Source Code..."
+
                 echo "=========================================="
 
                 checkout scm
@@ -157,8 +157,11 @@ pipeline {
                 ]) {
 
                     bat """
+
                     docker logout
+
                     docker login -u %DOCKER_USER% -p %DOCKER_PASS%
+
                     """
 
                 }
@@ -166,7 +169,8 @@ pipeline {
             }
 
         }
-                stage('Push Docker Images') {
+
+        stage('Push Docker Images') {
 
             failFast true
 
@@ -179,8 +183,11 @@ pipeline {
                         retry(3) {
 
                             bat """
+
                             docker push %BACKEND_IMAGE%:%IMAGE_TAG%
+
                             docker push %BACKEND_IMAGE%:latest
+
                             """
 
                         }
@@ -196,8 +203,11 @@ pipeline {
                         retry(3) {
 
                             bat """
+
                             docker push %FRONTEND_IMAGE%:%IMAGE_TAG%
+
                             docker push %FRONTEND_IMAGE%:latest
+
                             """
 
                         }
@@ -215,7 +225,9 @@ pipeline {
             steps {
 
                 echo "=========================================="
+
                 echo "Verifying Docker Images..."
+
                 echo "=========================================="
 
                 bat "docker images | findstr crm-backend"
@@ -226,77 +238,19 @@ pipeline {
 
         }
 
-        stage('Deploy to Kubernetes') {
+                stage('Deploy with Ansible') {
 
             steps {
 
                 echo "=========================================="
-                echo "Deploying CRM to Kubernetes..."
-                echo "=========================================="
 
-                bat "kubectl apply -f k8s/"
-
-                bat """
-                kubectl set image deployment/backend ^
-                backend=%BACKEND_IMAGE%:%IMAGE_TAG% ^
-                -n %KUBE_NAMESPACE%
-                """
-
-                bat """
-                kubectl set image deployment/frontend ^
-                frontend=%FRONTEND_IMAGE%:%IMAGE_TAG% ^
-                -n %KUBE_NAMESPACE%
-                """
-
-            }
-
-        }
-
-        stage('Wait for Rollout') {
-
-            steps {
+                echo "Deploying CRM Application using Ansible..."
 
                 echo "=========================================="
-                echo "Waiting for Kubernetes Rollout..."
-                echo "=========================================="
 
                 bat """
-                kubectl rollout status deployment/backend -n %KUBE_NAMESPACE% --timeout=300s
+                wsl bash -c "cd /mnt/c/Users/user/Documents/Dinesh_Individual_Projects_Final/Full-Stack_Projects/customer-relationship-management-system/ansible && ansible-playbook -i inventory deploy-crm.yml"
                 """
-
-                bat """
-                kubectl rollout status deployment/frontend -n %KUBE_NAMESPACE% --timeout=300s
-                """
-
-                bat """
-                kubectl wait --for=condition=Available deployment/backend -n %KUBE_NAMESPACE% --timeout=300s
-                """
-
-                bat """
-                kubectl wait --for=condition=Available deployment/frontend -n %KUBE_NAMESPACE% --timeout=300s
-                """
-
-            }
-
-        }
-
-        stage('Database Migration') {
-
-            steps {
-
-                echo "=========================================="
-                echo "Running Django Database Migration..."
-                echo "=========================================="
-
-                powershell '''
-
-                kubectl wait --for=condition=Ready pod -l app=backend -n crm --timeout=300s
-
-                $pod = kubectl get pods -n crm -l app=backend --field-selector=status.phase=Running -o jsonpath="{.items[0].metadata.name}"
-
-                kubectl exec -n crm $pod -- python manage.py migrate
-
-                '''
 
             }
 
@@ -307,16 +261,26 @@ pipeline {
             steps {
 
                 echo "=========================================="
-                echo "Verifying Kubernetes Resources..."
+
+                echo "Verifying CRM Deployment..."
+
                 echo "=========================================="
 
-                bat "kubectl get deployment -n %KUBE_NAMESPACE%"
+                bat """
+                kubectl get deployment -n crm
+                """
 
-                bat "kubectl get pods -n %KUBE_NAMESPACE%"
+                bat """
+                kubectl get pods -n crm
+                """
 
-                bat "kubectl get svc -n %KUBE_NAMESPACE%"
+                bat """
+                kubectl get svc -n crm
+                """
 
-                bat "kubectl get rs -n %KUBE_NAMESPACE%"
+                bat """
+                kubectl get ingress -n crm
+                """
 
             }
 
@@ -327,17 +291,19 @@ pipeline {
             steps {
 
                 echo "=========================================="
-                echo "Current Running Images"
+
+                echo "Running Docker Images"
+
                 echo "=========================================="
 
                 bat """
-                kubectl get deployment backend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                kubectl get deployment backend -n crm -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
 
                 echo ""
 
                 bat """
-                kubectl get deployment frontend -n %KUBE_NAMESPACE% -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                kubectl get deployment frontend -n crm -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
 
                 echo ""
@@ -354,11 +320,11 @@ pipeline {
 
             echo ""
 
-            echo "=================================================="
+            echo "========================================================"
 
-            echo " CRM APPLICATION DEPLOYED SUCCESSFULLY "
+            echo " CRM APPLICATION CI/CD PIPELINE COMPLETED SUCCESSFULLY "
 
-            echo "=================================================="
+            echo "========================================================"
 
         }
 
@@ -366,11 +332,11 @@ pipeline {
 
             echo ""
 
-            echo "=================================================="
+            echo "========================================================"
 
-            echo " CRM APPLICATION DEPLOYMENT FAILED "
+            echo " CRM APPLICATION CI/CD PIPELINE FAILED "
 
-            echo "=================================================="
+            echo "========================================================"
 
         }
 
@@ -378,9 +344,13 @@ pipeline {
 
             echo ""
 
-            echo "Cleaning Jenkins Workspace..."
+            echo "Cleaning Docker Images..."
 
             bat "docker image prune -af"
+
+            echo ""
+
+            echo "Cleaning Jenkins Workspace..."
 
             cleanWs()
 
