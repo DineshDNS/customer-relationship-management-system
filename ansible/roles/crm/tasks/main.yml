@@ -1,3 +1,4 @@
+---
 - name: Apply Namespace
   command: kubectl apply -f ../k8s/namespace.yaml
 
@@ -25,10 +26,10 @@
 - name: Frontend Service
   command: kubectl apply -f ../k8s/frontend-service.yaml
 
-  - name: Restart Backend
+- name: Restart Backend Deployment
   command: kubectl rollout restart deployment/backend -n crm
 
-- name: Restart Frontend
+- name: Restart Frontend Deployment
   command: kubectl rollout restart deployment/frontend -n crm
 
 - name: Wait for Backend Rollout
@@ -37,15 +38,31 @@
 - name: Wait for Frontend Rollout
   command: kubectl rollout status deployment/frontend -n crm --timeout=300s
 
-- name: Wait for Backend Pod
-  command: kubectl wait --for=condition=Ready pod -l app=backend -n crm --timeout=300s
-
-- name: Run Django Migrations
+- name: Get Running Backend Pod
   shell: |
-    POD=$(kubectl get pods -n crm -l app=backend -o jsonpath="{.items[0].metadata.name}")
-    kubectl exec -n crm $POD -- python manage.py migrate
+    kubectl get pods \
+      -n crm \
+      -l app=backend \
+      --field-selector=status.phase=Running \
+      -o jsonpath="{.items[-1].metadata.name}"
+  register: backend_pod
   args:
     executable: /bin/bash
+
+- name: Show Backend Pod
+  debug:
+    msg: "Backend Pod: {{ backend_pod.stdout }}"
+
+- name: Run Django Migration
+  command: >
+    kubectl exec
+    -n crm
+    {{ backend_pod.stdout }}
+    --
+    python manage.py migrate
+
+- name: Verify Deployments
+  command: kubectl get deployment -n crm
 
 - name: Verify Pods
   command: kubectl get pods -n crm
@@ -53,5 +70,5 @@
 - name: Verify Services
   command: kubectl get svc -n crm
 
-- name: Verify Deployments
-  command: kubectl get deployment -n crm
+- name: Verify ReplicaSets
+  command: kubectl get rs -n crm
