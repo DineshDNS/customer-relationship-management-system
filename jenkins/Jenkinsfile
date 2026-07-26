@@ -238,13 +238,13 @@ pipeline {
 
         }
 
-                stage('Deploy with Ansible') {
+        stage('Deploy CRM using Ansible') {
 
             steps {
 
                 echo "=========================================="
 
-                echo "Deploying CRM Application using Ansible..."
+                echo "Deploying CRM Application..."
 
                 echo "=========================================="
 
@@ -256,7 +256,7 @@ pipeline {
 
         }
 
-        stage('Verify Deployment') {
+        stage('Verify CRM Deployment') {
 
             steps {
 
@@ -266,21 +266,110 @@ pipeline {
 
                 echo "=========================================="
 
+                bat "kubectl get deployment -n crm"
+
+                bat "kubectl get pods -n crm"
+
+                bat "kubectl get svc -n crm"
+
+            }
+
+        }
+
+        stage('Deploy Monitoring') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Deploying Prometheus & Grafana..."
+
+                echo "=========================================="
+
+                bat "kubectl apply -f monitoring/"
+
+            }
+
+        }
+                stage('Restart Prometheus') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Restarting Prometheus..."
+
+                echo "=========================================="
+
                 bat """
-                kubectl get deployment -n crm
+                kubectl rollout restart deployment/prometheus -n monitoring
                 """
 
                 bat """
-                kubectl get pods -n crm
+                kubectl rollout status deployment/prometheus ^
+                -n monitoring ^
+                --timeout=300s
+                """
+
+            }
+
+        }
+
+        stage('Wait for Monitoring Rollout') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Waiting for Monitoring Stack..."
+
+                echo "=========================================="
+
+                bat """
+                kubectl rollout status deployment/grafana ^
+                -n monitoring ^
+                --timeout=300s
                 """
 
                 bat """
-                kubectl get svc -n crm
+                kubectl wait ^
+                --for=condition=Available ^
+                deployment/prometheus ^
+                -n monitoring ^
+                --timeout=300s
                 """
 
                 bat """
-                kubectl get ingress -n crm
+                kubectl wait ^
+                --for=condition=Available ^
+                deployment/grafana ^
+                -n monitoring ^
+                --timeout=300s
                 """
+
+            }
+
+        }
+
+        stage('Verify Monitoring') {
+
+            steps {
+
+                echo "=========================================="
+
+                echo "Verifying Monitoring Stack..."
+
+                echo "=========================================="
+
+                bat "kubectl get deployment -n monitoring"
+
+                bat "kubectl get pods -n monitoring"
+
+                bat "kubectl get svc -n monitoring"
+
+                bat "kubectl get configmap -n monitoring"
+
+                bat "kubectl get pvc -n monitoring"
 
             }
 
@@ -297,13 +386,33 @@ pipeline {
                 echo "=========================================="
 
                 bat """
-                kubectl get deployment backend -n crm -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                kubectl get deployment backend ^
+                -n crm ^
+                -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
 
                 echo ""
 
                 bat """
-                kubectl get deployment frontend -n crm -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                kubectl get deployment frontend ^
+                -n crm ^
+                -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                """
+
+                echo ""
+
+                bat """
+                kubectl get deployment prometheus ^
+                -n monitoring ^
+                -o=jsonpath="{.spec.template.spec.containers[0].image}"
+                """
+
+                echo ""
+
+                bat """
+                kubectl get deployment grafana ^
+                -n monitoring ^
+                -o=jsonpath="{.spec.template.spec.containers[0].image}"
                 """
 
                 echo ""
@@ -322,9 +431,21 @@ pipeline {
 
             echo "========================================================"
 
-            echo " CRM APPLICATION CI/CD PIPELINE COMPLETED SUCCESSFULLY "
+            echo " CRM APPLICATION DEPLOYED SUCCESSFULLY "
 
             echo "========================================================"
+
+            echo ""
+
+            echo "CRM Namespace"
+
+            bat "kubectl get all -n crm"
+
+            echo ""
+
+            echo "Monitoring Namespace"
+
+            bat "kubectl get all -n monitoring"
 
         }
 
@@ -334,9 +455,15 @@ pipeline {
 
             echo "========================================================"
 
-            echo " CRM APPLICATION CI/CD PIPELINE FAILED "
+            echo " CRM APPLICATION DEPLOYMENT FAILED "
 
             echo "========================================================"
+
+            echo ""
+
+            bat "kubectl get pods -A"
+
+            bat "kubectl get events -A --sort-by=.metadata.creationTimestamp"
 
         }
 
@@ -344,13 +471,21 @@ pipeline {
 
             echo ""
 
+            echo "=========================================="
+
             echo "Cleaning Docker Images..."
+
+            echo "=========================================="
 
             bat "docker image prune -af"
 
             echo ""
 
+            echo "=========================================="
+
             echo "Cleaning Jenkins Workspace..."
+
+            echo "=========================================="
 
             cleanWs()
 

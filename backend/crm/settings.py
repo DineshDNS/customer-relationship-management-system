@@ -60,6 +60,8 @@ SECURE_PROXY_SSL_HEADER = (
 
 INSTALLED_APPS = [
 
+    "django_prometheus",
+
     # Django Apps
 
     "django.contrib.admin",
@@ -96,6 +98,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
 
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+
     "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.security.SecurityMiddleware",
@@ -111,6 +115,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
 
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 # ============================================================

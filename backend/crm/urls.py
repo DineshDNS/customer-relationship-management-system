@@ -3,6 +3,8 @@ from django.urls import path, include
 from health.views import health
 
 urlpatterns = [
+    path("", include("django_prometheus.urls")),
+
     path("admin/", admin.site.urls),
 
     path(
