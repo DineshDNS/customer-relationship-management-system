@@ -38,13 +38,28 @@
 - name: Wait for Frontend Rollout
   command: kubectl rollout status deployment/frontend -n crm --timeout=300s
 
+# Wait until the backend pod is actually Ready
+- name: Wait for Backend Pod Ready
+  command: >
+    kubectl wait
+    --for=condition=Ready
+    pod
+    -l app=backend
+    -n crm
+    --timeout=300s
+
+# Small buffer to ensure Gunicorn is fully started
+- name: Wait 10 Seconds
+  pause:
+    seconds: 10
+
 - name: Get Running Backend Pod
   shell: |
     kubectl get pods \
       -n crm \
       -l app=backend \
       --field-selector=status.phase=Running \
-      -o jsonpath="{.items[-1].metadata.name}"
+      -o jsonpath="{.items[0].metadata.name}"
   register: backend_pod
   args:
     executable: /bin/bash
@@ -60,6 +75,14 @@
     {{ backend_pod.stdout }}
     --
     python manage.py migrate
+
+- name: Collect Static Files
+  command: >
+    kubectl exec
+    -n crm
+    {{ backend_pod.stdout }}
+    --
+    python manage.py collectstatic --noinput
 
 - name: Verify Deployments
   command: kubectl get deployment -n crm
