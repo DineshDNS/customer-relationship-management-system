@@ -22,23 +22,13 @@ data:
         static_configs:
 
           - targets:
+              - "localhost:9090"
 
-              - localhost:9090
+      - job_name: "crm-backend"
 
-     - job_name: "crm-backend"
-
-      metrics_path: /metrics
-
-      static_configs:
-
-        - targets:
-
-            - backend-service.crm.svc.cluster.local:8000
-
-      - job_name: "crm-frontend"
+        metrics_path: /metrics
 
         static_configs:
 
           - targets:
-
-              - frontend-service.crm.svc.cluster.local:80
+              - "backend-service.crm.svc.cluster.local:8000"
